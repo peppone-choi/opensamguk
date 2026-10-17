@@ -99,7 +99,7 @@ export default function GameAdminScreen({ tab }: { readonly tab: AdminTabKey }) 
                 <StatusView
                     kind="waiting"
                     title="외교 관계를 준비하고 있습니다"
-                    body="모든 세력 사이의 관계(전쟁 · 강화 · 불가침)와 언제부터 · 언제까지를 서버가 아직 주지 않습니다. 준비되면 이 자리에 표로 보입니다."
+                    body="모든 세력 사이의 관계(전쟁 · 강화 · 불가침)와 언제부터 · 언제까지를 서버가 아직 주지 않습니다."
                 />
             ) : null}
             {tab === 'status' ? <AdminServerStatus /> : null}

@@ -161,10 +161,22 @@ class HeartbeatTest(unittest.TestCase):
         self.assertEqual("peer_cancelled", classify_peer_runs(runs, NOW, 100))
 
     def test_missing_or_delayed_schedule_is_not_success(self):
-        runs = [{"id": 99, "event": "schedule", "created_at": "2026-09-28T11:40:00Z",
+        runs = [{"id": 99, "event": "schedule", "created_at": "2026-09-28T10:59:00Z",
                  "status": "completed", "conclusion": "success"}]
         self.assertEqual("peer_schedule_missing", classify_peer_runs(runs, NOW, 100))
         self.assertEqual("peer_not_started", classify_peer_runs([], NOW, 100))
+
+    def test_twenty_minute_delay_and_sixty_minute_boundary_are_healthy(self):
+        for minutes in (20, 60):
+            for status in ('completed', 'queued', 'in_progress'):
+                runs = [{'id': 99, 'event': 'schedule',
+                         'created_at': (NOW - timedelta(minutes=minutes)).isoformat(),
+                         'status': status, 'conclusion': 'success' if status == 'completed' else None}]
+                self.assertIsNone(classify_peer_runs(runs, NOW, 100))
+        for status in ('queued', 'in_progress'):
+            runs = [{'id': 99, 'event': 'schedule', 'created_at': (NOW - timedelta(minutes=61)).isoformat(),
+                     'status': status, 'conclusion': None}]
+            self.assertEqual('peer_schedule_missing', classify_peer_runs(runs, NOW, 100))
 
     def test_recent_success_is_healthy(self):
         runs = [{"id": 99, "event": "schedule", "created_at": "2026-09-28T11:55:00Z",

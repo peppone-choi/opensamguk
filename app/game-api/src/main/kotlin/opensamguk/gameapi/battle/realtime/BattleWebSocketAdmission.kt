@@ -100,7 +100,7 @@ class BattleWebSocketAdmission(
     }
 }
 
-/** JOINING v2 placement frames only; running commands remain closed. */
+/** Protected v2 placement and COMMAND ingress; combat effects are a separate stage. */
 class BattleWebSocketHandler(
     private val sessions: BattleWebSocketSessions,
     private val initialSnapshot: ((BattleJoinIdentity) -> String)? = null,
@@ -176,7 +176,7 @@ class BattleWebSocketConfiguration(
         val codec = BattleV2WireCodec(mapper)
         val service = BattleV2CommandService(store, it, codec)
         fun(identity: BattleJoinIdentity, text: String): String =
-            service.move(identity, codec.deploymentMove(text))
+            service.receive(identity, text)
     }
 
     @Bean

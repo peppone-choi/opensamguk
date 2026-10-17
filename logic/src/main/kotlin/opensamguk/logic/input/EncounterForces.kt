@@ -120,14 +120,17 @@ class EncounterForces(
         const val META_KEY = "encounterForces"
         fun read(meta: Map<String, Any?>, encounter: CorpsEncounter): EncounterForces? {
             if (META_KEY !in meta) return null
-            val row = meta[META_KEY] as? Map<*, *> ?: invalidForce()
+            return readSealed(meta[META_KEY]).also { it.requireBinding(encounter) }
+        }
+
+        fun readSealed(raw: Any?): EncounterForces {
+            val row = raw as? Map<*, *> ?: invalidForce()
             require(row.keys == setOf("version", "encounterId", "snapshotId", "units", "commanders") && row["version"] == 1)
             val units = (row["units"] as? List<*>)?.map(EncounterUnitForce::read) ?: invalidForce()
             val commanders = (row["commanders"] as? List<*>)?.map(EncounterCommanderForce::read) ?: invalidForce()
             val result = EncounterForces(row["encounterId"] as? String ?: invalidForce(), units, commanders)
             require(units == result.units && commanders == result.commanders) { "Noncanonical frozen forces" }
             require(row["snapshotId"] == result.snapshotId) { "Frozen force hash mismatch" }
-            result.requireBinding(encounter)
             return result
         }
     }

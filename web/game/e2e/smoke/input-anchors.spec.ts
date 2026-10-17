@@ -26,6 +26,7 @@ const POLITICAL = [
     { inputId: 'action.rise', available: true },
     { inputId: 'action.foundState', available: true },
     { inputId: 'action.resign', available: true },
+    { inputId: 'action.dissolve', available: true },
     { inputId: 'action.abdicate', available: true, targets: [PERSON] },
     { inputId: 'action.oath', available: true, targets: [PERSON] },
 ];
@@ -105,6 +106,7 @@ const FLOW_CASES = [
     { inputId: 'action.foundState', name: '건국', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.foundState', args: {} },
     { inputId: 'action.rise', name: '거병', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.rise', args: {} },
     { inputId: 'action.resign', name: '하야', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.resign', args: {} },
+    { inputId: 'action.dissolve', name: '세력 해산', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.dissolve', args: {} },
     { inputId: 'action.abdicate', name: '선양', reads: { '/commands/political-options': POLITICAL }, picks: [/검증용 인물/], path: '/api/game/api/command/action.abdicate', args: { targetGeneralId: 8 } },
     { inputId: 'action.oath', name: '결의', reads: { '/commands/political-options': POLITICAL }, picks: [/검증용 인물/], path: '/api/game/api/command/action.oath', args: { targetGeneralId: 8 } },
     {
@@ -128,11 +130,10 @@ const FLOW_CASES = [
 const FLOW_PLANNED = [
     { inputId: 'action.retire', name: '은퇴', path: '/api/game/api/command/action.retire' },
     { inputId: 'action.independence', name: '독립', path: '/api/game/api/command/action.independence' },
-    { inputId: 'action.dissolve', name: '세력 해산', path: '/api/game/api/command/action.dissolve' },
 ] as const;
 
 /** 대역 서버: 로그인 · front-info · 사례의 읽기, 흐름 예약 · 조정 POST 는 202 접수 · 결과 조회 RESOLVED, 나머지 게임 읽기는 503. */
-async function serve(page: Page, reads: Readonly<Record<string, unknown>>) {
+async function serve(page: Page, reads: Readonly<Record<string, unknown>>, wanderingLord = false) {
     const slots = new Map<number, ReservedSlot>();
     let revisions = 0;
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
@@ -145,8 +146,8 @@ async function serve(page: Page, reads: Readonly<Record<string, unknown>>) {
             return json(route, 200, {
                 result: true,
                 global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
-                general: { hasGeneral: true, generalId: GENERAL_ID, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
-                nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
+                general: { hasGeneral: true, generalId: GENERAL_ID, name: '하후돈', nationId: 1, officerLevel: wanderingLord ? 12 : 1, permission: 0, showSecret: false },
+                nation: { id: 1, name: wanderingLord ? '검증용 방랑군' : '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
             });
         }
         if (path === '/reserved-commands') return json(route, 200, { result: true, generalId: GENERAL_ID, slots: [...slots.values()] });
@@ -194,6 +195,7 @@ test('흐름 직접 행동 표와 이 스펙의 사례가 한 줄도 빠지지 �
     for (const c of FLOW_CASES) expect(FLOW_COMMANDS.find((f) => f.inputId === c.inputId)?.delivery).not.toBe('PLANNED');
     for (const c of FLOW_PLANNED) expect(FLOW_COMMANDS.find((f) => f.inputId === c.inputId)?.delivery).toBe('PLANNED');
     expect(FLOW_COMMANDS.find((f) => f.inputId === 'action.rise')?.delivery).toBe('HANDLER_READY');
+    expect(FLOW_COMMANDS.find((f) => f.inputId === 'action.dissolve')?.delivery).toBe('HANDLER_READY');
     expect(FLOW_COMMANDS.find((f) => f.inputId === 'action.donate')?.delivery).toBe('UI_READY');
 });
 
@@ -223,7 +225,8 @@ test.describe('입력 앵커 — 명령 흐름', () => {
     };
     for (const c of FLOW_CASES) {
         test(`[${c.inputId}] ${c.name}: 흐름 앵커에서 고르고 보내면 그 입력 · 순 · 인자로 접수를 청한다`, { tag: [BOTH] }, async ({ page }, info) => {
-            await serve(page, c.reads);
+            // Dissolve options model an eligible landless lord in the month after initialization.
+            await serve(page, c.reads, c.inputId === 'action.dissolve');
             await page.goto(`/game?do=${c.inputId}`, { waitUntil: 'domcontentloaded' });
             const flow = page.getByTestId('command-flow');
             await expect(flow).toBeVisible({ timeout: 60_000 });
@@ -250,6 +253,28 @@ test.describe('입력 앵커 — 명령 흐름', () => {
                 slots: [{ turnIdx: 0, action: c.inputId, brief: c.name, arg: c.args }],
             });
             await expect(flow.getByText(`「${savedSentences[c.inputId] ?? c.name}」 — 01순에 예약했습니다.`)).toBeVisible();
+        });
+    }
+
+    for (const denied of [
+        { code: 'INITIAL_MONTH', reason: '세계 초기 월에는 미래 순의 해산 예약도 할 수 없습니다.' },
+        { code: 'NOT_LORD', reason: '군주만 세력을 해산할 수 있습니다.' },
+        { code: 'STATE_UNAVAILABLE', reason: '영토 없는 방랑군만 해산할 수 있습니다.' },
+    ] as const) {
+        test(`[action.dissolve] ${denied.code}: 정치 선택지 거절은 미래 순에도 예약 POST를 보내지 않는다`, { tag: [BOTH] }, async ({ page }, info) => {
+            const sent = postsTo(page, '/api/game/api/command/action.dissolve');
+            await serve(page, { '/commands/political-options': [{ inputId: 'action.dissolve', available: false, ...denied }] });
+            await page.goto('/game?do=action.dissolve', { waitUntil: 'domcontentloaded' });
+            const flow = page.getByTestId('command-flow');
+            await expect(flow).toBeVisible({ timeout: 60_000 });
+            await press(flow.locator('[data-turn-idx="11"]'), info);
+            const submit = flow.locator('[data-input-id="action.dissolve"][data-input-status]');
+            await expect(submit).not.toHaveAttribute('data-input-status', 'AVAILABLE');
+            await press(submit, info);
+            const sheet = page.getByRole('dialog', { name: '세력 해산 — 지금은 할 수 없습니다' });
+            await expect(sheet).toBeVisible();
+            await expect(sheet).toContainText(denied.reason);
+            expect(sent).toEqual([]);
         });
     }
 

@@ -73,6 +73,28 @@ class BattleV2CommandServiceTest {
         verify(store, never()).admit(anyRecord())
     }
 
+    @Test
+    fun `COMMAND ingress resolves own-only keys and never emits a v1 slot or effect`() {
+        arrange()
+        `when`(store.admit(anyRecord())).thenReturn(CommandAdmission.Receipt(
+            BattleCommandReceipt("command", BattleCommandVerdict.ACCEPTED, null, 10, null, null, 3)))
+        val text = """{"schemaVersion":2,"t":"COMMAND","clientCommandId":"command","expectedEpoch":"2","expectedAuthorityRevision":"3","issuedTick":10,"scope":{"allMine":true},"intentType":"ATTACK","intentPayload":{"rally":"CENTER"}}"""
+        val ack = mapper.readTree(service.receive(identity, text))
+        assertEquals("ACCEPTED", ack["receipt"]["verdict"].textValue())
+        assertTrue(ack["inputId"].isNull)
+        assertTrue(ack["receipt"]["deploymentRevisionAfter"].isNull)
+        val record = ArgumentCaptor.forClass(BattleCommandRecord::class.java)
+        verify(store).admit(record.capture() ?: placeholder)
+        val admitted = assertNotNull(record.value.scopedCommand)
+        assertEquals(setOf(own), admitted.controlledKeys)
+        assertNull(admitted.sourceKeys)
+        assertNull(record.value.deploymentMove)
+        assertFalse(record.value.intentJson.contains("slot"))
+        clearInvocations(store)
+        assertFails { service.receive(identity.copy(accountId = 99), text) }
+        verify(store, never()).admit(anyRecord())
+    }
+
     private fun policy() = ServerAdmissionPolicy(ServerAdmissionSource {
         ServerAdmissionRead.Known(ServerAdmissionSnapshot("pep", ServerPublicationState.PUBLIC, 1),
             System.nanoTime(), Duration.ofSeconds(2).toNanos())
@@ -106,7 +128,7 @@ class BattleV2CommandServiceTest {
     }
 
     @Test
-    fun `malformed text and unsupported COMMAND close without invoking persistence`() {
+    fun `malformed v2 text closes without invoking persistence`() {
         val tickets = mock(BattleJoinTicketService::class.java)
         val generals = mock(GeneralResolver::class.java)
         `when`(tickets.isCurrent(identity)).thenReturn(true)
@@ -189,7 +211,7 @@ class BattleV2CommandServiceTest {
                 val publication = policy()
                 val sessions = BattleWebSocketSessions(ticketService, realGenerals, publication)
                 val handler = BattleWebSocketHandler(sessions, publisher::snapshot) { current, text ->
-                    commands.move(current, wire.deploymentMove(text))
+                    commands.receive(current, text)
                 }
                 val admission = BattleWebSocketAdmission(ticketService,
                     opensamguk.gameapi.config.GameApiProcessWorld(1), realGenerals,
@@ -278,6 +300,28 @@ class BattleV2CommandServiceTest {
             assertEquals(before, reconstructed.deployment(world, "roundtrip", initial))
             assertEquals(head, reconstructed.head(world, "roundtrip"))
             assertTrue(reconstructed.eventsAfter(world, "roundtrip", 0).isEmpty())
+
+            // C4 has no v2 actor yet. Advance only the isolated fixture, never claim a gameplay effect.
+            jdbc.update("UPDATE battle_session SET phase = 'RUNNING', current_tick = 10 WHERE battle_id = 'roundtrip'",
+                org.springframework.jdbc.core.namedparam.MapSqlParameterSource())
+            val commandFrame = """{"schemaVersion":2,"t":"COMMAND","clientCommandId":"running-command","expectedEpoch":"${head.sessionEpoch}","expectedAuthorityRevision":"3","issuedTick":10,"scope":{"allMine":true},"intentType":"DEFEND","intentPayload":{"rally":"HOME"}}"""
+            val beforeCommand = reconstructed.head(world, "roundtrip")
+            sockets.last().sendMessage(TextMessage(commandFrame))
+            val commandAckText = receive(reconnected)
+            val commandAck = mapper.readTree(commandAckText)
+            assertEquals("ACCEPTED", commandAck["receipt"]["verdict"].textValue())
+            assertTrue(commandAck["inputId"].isNull)
+            assertTrue(commandAck["receipt"]["deploymentRevisionAfter"].isNull)
+            println("C3B_ROUNDTRIP_COMMAND_FRAME=$commandFrame")
+            println("C3B_ROUNDTRIP_ACK_FRAME=$commandAckText")
+            sockets.last().sendMessage(TextMessage(commandFrame))
+            val commandReplay = mapper.readTree(receive(reconnected))
+            assertTrue(commandReplay["replayed"].booleanValue())
+            assertEquals(commandAck["receipt"], commandReplay["receipt"])
+            assertEquals(beforeCommand, reconstructed.head(world, "roundtrip"))
+            assertEquals(before, reconstructed.deployment(world, "roundtrip", initial))
+            assertTrue(reconstructed.eventsAfter(world, "roundtrip", 0).isEmpty())
+            assertNull(reconnected.poll(250, java.util.concurrent.TimeUnit.MILLISECONDS), "COMMAND ACK is not a state update")
         } finally {
             try { sockets.forEach { if (it.isOpen) it.close(CloseStatus.NORMAL) } }
             finally {

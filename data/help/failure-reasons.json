@@ -387,6 +387,13 @@
       "byInputId": {}
     },
     {
+      "code": "INITIAL_MONTH",
+      "reviewState": "DRAFT",
+      "explanation": "세계가 시작된 첫 달에는 세력을 해산할 수 없습니다. 미래 순의 예약도 할 수 없습니다.",
+      "recoveryAdvice": "세계의 다음 달이 시작된 뒤 세력 해산을 다시 예약하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "INSUFFICIENT_RENOWN",
       "reviewState": "DRAFT",
       "explanation": "필요한 명망이 부족합니다.",

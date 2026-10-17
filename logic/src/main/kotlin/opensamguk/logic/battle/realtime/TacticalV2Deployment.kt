@@ -8,7 +8,7 @@ import java.security.MessageDigest
 import java.util.Collections
 
 /** v2 identity is a campaign source, never a formation slot or a generated general. */
-enum class TacticalV2SourceKind { RETINUE, CITY_GARRISON_BUGOK }
+enum class TacticalV2SourceKind { RETINUE, CITY_GARRISON_BUGOK, PRODUCED, REINFORCEMENT }
 
 data class TacticalV2SourceKey(val kind: TacticalV2SourceKind, val sourceId: String,
                               val cityId: Int? = null) :
@@ -19,6 +19,8 @@ data class TacticalV2SourceKey(val kind: TacticalV2SourceKind, val sourceId: Str
             TacticalV2SourceKind.RETINUE -> require(cityId == null &&
                 sourceId.toIntOrNull()?.let { it > 0 && it.toString() == sourceId } == true)
             TacticalV2SourceKind.CITY_GARRISON_BUGOK -> require(cityId != null && cityId > 0)
+            TacticalV2SourceKind.PRODUCED, TacticalV2SourceKind.REINFORCEMENT ->
+                require(cityId == null && sourceId.none { it.isWhitespace() })
         }
     }
 
@@ -44,6 +46,10 @@ data class TacticalV2UnitSource(
         require(initialTroops > 0 && sourceRevision >= 0)
         when (key.kind) {
             TacticalV2SourceKind.RETINUE -> require(ownerGeneralId != null && ownerGeneralId > 0 &&
+                commanderGeneralId != null && commanderGeneralId > 0)
+            TacticalV2SourceKind.PRODUCED -> require(ownerGeneralId != null && ownerGeneralId > 0 &&
+                (commanderGeneralId == null || commanderGeneralId > 0))
+            TacticalV2SourceKind.REINFORCEMENT -> require(ownerGeneralId != null && ownerGeneralId > 0 &&
                 commanderGeneralId != null && commanderGeneralId > 0)
             TacticalV2SourceKind.CITY_GARRISON_BUGOK -> require(side == BattleSide.DEFENDER &&
                 (ownerGeneralId == null || ownerGeneralId > 0) &&

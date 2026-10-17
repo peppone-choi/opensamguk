@@ -202,6 +202,13 @@ class TurnDaemonLifecycle(
             // A malformed persisted hand is an authoritative-state failure. Keep the existing
             // no-consumption boundary instead of quarantining it as a recoverable action error.
             if (world.ruleProfile == RuleProfile.HWIHA) StratagemHand.read(g.meta, g.id)
+            if (handler.recorder.generalTurnSlotWrites().any {
+                    it.generalId == g.id && it.turnIdx == 0 &&
+                        it.brief == opensamguk.engine.campaign.PoliticalHandler.DISSOLVE_CANCEL_BRIEF
+                }) {
+                handled.add(settleFailedGeneral(g, dueGeneral, state, "RESERVATION_CANCELLED"))
+                continue
+            }
             val unit = TurnFailureUnit.General(g.id)
             val monthNumber = state.currentYear * 12 + state.currentMonth - 1
             if (!failureLedger.canExecute(unit, monthNumber)) {
@@ -405,8 +412,11 @@ class TurnDaemonLifecycle(
             meta = if (world.ruleProfile == RuleProfile.HWIHA) PersonalTurn.after(current.meta, state) else current.meta)
         handler.recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(advanced))
         world.applyGeneralDirtyFree(advanced)
-        val reason = if (code == "TURN_QUARANTINED") "반복 오류로 이번 달 장수 턴을 건너뛰었습니다."
-            else "장수 턴 실행 중 오류가 발생했습니다."
+        val reason = when (code) {
+            "RESERVATION_CANCELLED" -> "세력 해산으로 예약이 취소되었습니다."
+            "TURN_QUARANTINED" -> "반복 오류로 이번 달 장수 턴을 건너뛰었습니다."
+            else -> "장수 턴 실행 중 오류가 발생했습니다."
+        }
         world.pushLog(LogEntryDraft("general", "action", reason, generalId = g.id, nationId = g.nationId,
             year = state.currentYear, month = state.currentMonth, phase = state.currentPhase))
         return ReservedTurnHandler.HandledTurn(

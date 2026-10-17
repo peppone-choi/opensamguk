@@ -91,12 +91,7 @@ class AuthService(
         val userDetails = auth.principal as CustomUserDetails
         val user = userRepository.findByUsername(userDetails.username)
             .orElseThrow { IllegalArgumentException("사용자를 찾을 수 없습니다.") }
-        // B2b: 전역 로그인 허용 게이트 — legacy `LOGIN != 'Y' && grade < 5` deny.
-        // 0.9.0 divergence: grade≥5(부운영자+) 우회 = role==ADMIN 우회. 행 부재 시 미허용 폴백.
-        val systemFlag = systemFlagRepository.findSingleton()
-        if ((systemFlag == null || !systemFlag.allowLogin) && user.role != "ADMIN") {
-            throw AuthPolicyDeniedException(AuthPolicyFailureCode.LOGIN_DISABLED)
-        }
+        assertLoginAllowed(user)
         val accessToken = jwtTokenProvider.generateAccessToken(user.id, user.role)
         val refreshToken = jwtTokenProvider.generateRefreshToken(user.id)
         return AuthResponse(accessToken, refreshToken, user.toResponse())
@@ -111,6 +106,7 @@ class AuthService(
             ?: throw IllegalArgumentException("토큰에서 사용자 ID를 추출할 수 없습니다.")
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("사용자를 찾을 수 없습니다.") }
+        assertLoginAllowed(user)
         val accessToken = jwtTokenProvider.generateAccessToken(user.id, user.role)
         val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.id)
         return AuthResponse(accessToken, newRefreshToken, user.toResponse())
@@ -161,6 +157,15 @@ class AuthService(
         val user = findUser(userDetails)
         assertCurrentPassword(user, request.currentPassword)
         userRepository.delete(user)
+    }
+
+    private fun assertLoginAllowed(user: UserEntity) {
+        // B2b: 전역 로그인 허용 게이트 — legacy `LOGIN != 'Y' && grade < 5` deny.
+        // 0.9.0 divergence: grade≥5(부운영자+) 우회 = role==ADMIN 우회. 행 부재 시 미허용 폴백.
+        val systemFlag = systemFlagRepository.findSingleton()
+        if ((systemFlag == null || !systemFlag.allowLogin) && user.role != "ADMIN") {
+            throw AuthPolicyDeniedException(AuthPolicyFailureCode.LOGIN_DISABLED)
+        }
     }
 
     private fun findUser(userDetails: CustomUserDetails): UserEntity =

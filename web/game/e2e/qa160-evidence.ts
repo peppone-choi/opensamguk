@@ -1,11 +1,11 @@
 // Public evidence is data, never an exception message, HTTP body, URL or log text.
 export const STAGES = [
   'S01_NETWORK_SETUP', 'S02_MOVE_FLOW', 'S03_FRONT_IDENTITY', 'S04_TURN_SSE',
-  'S05_CLOCK_CHANGE', 'S06_MAP_INVALIDATION', 'S07_NO_POSTS',
+  'S05_CLOCK_CHANGE', 'S05_WORLD_TICK_PERSISTED', 'S06_MAP_INVALIDATION', 'S07_NO_POSTS',
   'S10_TRAVEL_OPTIONS', 'S11_TRAVEL_AVAILABLE', 'S12_RING_READ', 'S13_SLOT0_EMPTY',
   'S14_TRAVEL_FLOW_BUTTON', 'S15_SNAPSHOT_BEFORE', 'S16_SUBMIT_RESPONSE', 'S17_SUBMIT_202',
   'S18_REQUEST_ID', 'S19_QUEUED_SNAPSHOT', 'S20_RING_REVISION', 'S21_RESULT_RESOLVED',
-  'S22_RESULT_OK', 'S23_PERSONAL_STAMP', 'S24_PERSISTED_FIELDS', 'S25_RELOAD_READBACK', 'S26_POSTS_EXACT',
+  'S22_RESULT_OK', 'S23_PERSONAL_STAMP', 'S24_PERSISTED_FIELDS', 'S24_WORLD_CLOCK_CONTRACT', 'S25_RELOAD_READBACK', 'S26_POSTS_EXACT',
 ] as const;
 export type Stage = typeof STAGES[number];
 const ERROR_CLASSES = ['POLL_TIMEOUT', 'LOCATOR_TIMEOUT', 'EXPECT_MISMATCH', 'HTTP_STATUS', 'SNAPSHOT_EXEC', 'NAVIGATION', 'INTERNAL'] as const;
@@ -77,6 +77,31 @@ export class TurnDiagnostics {
   }
 }
 
+/** Observe S16 without changing click/response deadlines, matching, retries or failure identity. */
+export async function observeSubmit<T>(
+  diagnostic: TurnDiagnostics,
+  waitForResponse: () => Promise<T>,
+  click: () => Promise<unknown>,
+): Promise<T> {
+  diagnostic.probe.submitPhase = 'REGISTER_RESPONSE';
+  diagnostic.probe.submitClickCompleted = false;
+  diagnostic.probe.submitResponseObserved = false;
+  // Observe rejection immediately while the click is pending. No raw error is put in a probe.
+  // The click still has precedence, exactly as the sequential click -> response boundary.
+  const submitted = waitForResponse().then(
+    value => { diagnostic.probe.submitResponseObserved = true; return { ok: true as const, value }; },
+    (error: unknown) => ({ ok: false as const, error }),
+  );
+  diagnostic.probe.submitPhase = 'CLICK_PENDING';
+  await click();
+  diagnostic.probe.submitClickCompleted = true;
+  diagnostic.probe.submitPhase = 'RESPONSE_PENDING';
+  const outcome = await submitted;
+  if (outcome.ok === false) throw outcome.error;
+  diagnostic.probe.submitPhase = 'RESPONSE_RECEIVED';
+  return outcome.value;
+}
+
 type Rule = ((value: unknown) => boolean) | { [key: string]: Rule } | readonly [Rule, number];
 const integer: Rule = v => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
 const boolean: Rule = v => typeof v === 'boolean';
@@ -94,8 +119,11 @@ const failure: Rule = { stage: enumeration(...STAGES), errorClass: enumeration(.
   httpStatus: nullable(v => typeof v === 'number' && Number.isInteger(v) && v >= 100 && v <= 599), stageElapsedMs: integer };
 const persisted: Rule = { personalStampMatch: boolean, inputIdMatch: boolean, experienceIncreased: boolean,
   dedicationIncreased: boolean, turnTimeChanged: boolean, worldLastTurnChanged: boolean, reservationCleared: boolean,
-  logCountPositive: boolean, terminalStatus, terminalOk: boolean };
-const probe: Rule = { travelAvailable: boolean, slot0Occupied: boolean, slot0Action: action,
+  logCountPositive: boolean, terminalStatus, terminalOk: boolean,
+  worldClockBranch: enumeration('UNCHANGED', 'ADVANCED', 'INVALID'), worldClockOk: boolean };
+const probe: Rule = { worldTick: { clockAdvanced: boolean, lastTurnChanged: boolean }, travelAvailable: boolean, slot0Occupied: boolean, slot0Action: action,
+  submitPhase: enumeration('REGISTER_RESPONSE', 'CLICK_PENDING', 'RESPONSE_PENDING', 'RESPONSE_RECEIVED'),
+  submitClickCompleted: boolean, submitResponseObserved: boolean,
   submitButtonVisible: boolean, submitButtonEnabled: boolean, postCount: integer, postStatus: integer,
   postBodyStatus: enumeration('AVAILABLE', 'BLOCKED', 'UNKNOWN'),
   postBodyCode: enumeration('BLOCKED', 'UNAUTHORIZED', 'FORBIDDEN', 'INVALID_COMMAND', 'INVALID_ARGUMENT', 'NOT_FOUND', 'INTERNAL_ERROR', 'POLICY_UNAVAILABLE', 'STATE_UNAVAILABLE', 'WRONG_RULE_PROFILE', 'NOT_DELIVERED', 'INVALID_TURN_SLOT', 'INVALID_REQUEST',
@@ -154,4 +182,35 @@ export function sanitizeEvidence(value: unknown, kind: 'roles' | 'turn-reservati
   const result = out ?? {};
   if (dropped) result.sanitizerDropped = dropped;
   return result;
+}
+
+// Persisted SQL clocks and bracketing front reads, not SSE counts, decide this contract.
+type WorldDate = { year: number; month: number; phase: number };
+type PersistedWorldClock = WorldDate & { lastTurnTime: unknown };
+type FrontWorldClock = WorldDate & { serverId: string; generation: number };
+const compareWorldDate = (a: WorldDate, b: WorldDate) => a.year - b.year || a.month - b.month || a.phase - b.phase;
+const validWorldDate = (value: WorldDate) => [value.year, value.month, value.phase].every(Number.isSafeInteger);
+const hasLastTurnTime = (value: PersistedWorldClock) => typeof value.lastTurnTime === 'string' && value.lastTurnTime.trim().length > 0;
+
+export function checkWorldTickPersisted(before: PersistedWorldClock, after: PersistedWorldClock, frontAfter: FrontWorldClock) {
+  const clockAdvanced = validWorldDate(before) && validWorldDate(after) && compareWorldDate(after, before) > 0;
+  const lastTurnChanged = hasLastTurnTime(before) && hasLastTurnTime(after) && after.lastTurnTime !== before.lastTurnTime;
+  return { clockAdvanced, lastTurnChanged,
+    ok: clockAdvanced && lastTurnChanged && validWorldDate(frontAfter) && compareWorldDate(after, frontAfter) >= 0 };
+}
+
+export function checkWorldClockContract(before: PersistedWorldClock, after: PersistedWorldClock,
+  frontBefore: FrontWorldClock, frontAfter: FrontWorldClock, identity: FrontWorldClock) {
+  if (!validWorldDate(before) || !validWorldDate(after) || !hasLastTurnTime(before) || !hasLastTurnTime(after)
+      || compareWorldDate(after, before) < 0) return { worldClockBranch: 'INVALID', worldClockOk: false } as const;
+  const advanced = compareWorldDate(after, before) > 0;
+  const sameWorld = [identity, frontBefore, frontAfter].every(f => f.serverId === 'qa160'
+    && Number.isSafeInteger(f.generation) && f.generation >= 0 && f.generation === identity.generation);
+  // One SQL read must match an endpoint and lie between them; do not retry away a mismatch.
+  const frontMatches = validWorldDate(frontBefore) && validWorldDate(frontAfter)
+    && compareWorldDate(frontBefore, after) <= 0 && compareWorldDate(after, frontAfter) <= 0
+    && (compareWorldDate(after, frontBefore) === 0 || compareWorldDate(after, frontAfter) === 0);
+  return { worldClockBranch: advanced ? 'ADVANCED' : 'UNCHANGED',
+    worldClockOk: sameWorld && frontMatches && (advanced
+      ? after.lastTurnTime !== before.lastTurnTime : after.lastTurnTime === before.lastTurnTime) };
 }

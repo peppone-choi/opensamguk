@@ -95,6 +95,8 @@ describe('ProposalsScreen — 제안 읽기(K8-06)', () => {
         const { container } = await open({ status: 'READY', reason: null, now: { year: 201, month: 4, phase: 3 }, proposals: [] });
         expect(screen.getByText('이번 순 제안이 없습니다')).toBeInTheDocument();
         expect(screen.getByText('고를 제안이 없습니다')).toBeInTheDocument();
+        // 제목을 되풀이하는 보조 문장은 두지 않는다(사용자 2026-10-17)
+        expect(screen.queryByText(/부의 인물이 올린 제안이|올라온 제안이 생기면/)).toBeNull();
         expectServerWait(container, []);
     });
 

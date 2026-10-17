@@ -131,6 +131,88 @@ class PepContractTests(unittest.TestCase):
             self.assertEqual(pep.unapplied_mode(head, base, repo), 'reset')
             self.assertEqual(pep.unapplied_mode(head, head, repo), 'refresh')
 
+    def test_auto_reset_defers_before_docker_and_preserves_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            marker = root / '.pep-loop-source'
+            marker.write_text(pep.BASELINE + '\n')
+            before = {p.name: p.read_bytes() for p in root.iterdir()}
+            args = argparse.Namespace(server='pep', mode='auto', source=SOURCE, checkout=root)
+            paths = ['data/curated/%02d.json' % n for n in range(25)] + ['web/game/page.tsx']
+            output = io.StringIO()
+            with patch.object(pep, 'ROOT', root), patch.dict(os.environ, {'PEP_IMAGES': json.dumps(IMAGES)}), \
+                    patch.object(pep, 'admit_snapshot') as admit, \
+                    patch.object(pep, 'unapplied_mode', return_value='reset'), \
+                    patch.object(pep, 'unapplied_paths', return_value=paths), \
+                    patch.object(pep, 'command') as command, patch.object(pep, 'summary') as summary, \
+                    patch.object(pep.fcntl, 'flock'), patch('builtins.open'), \
+                    patch('sys.stdout', output):
+                self.assertEqual(78, pep.apply(args))
+            command.assert_not_called()
+            admit.assert_called_once_with(root, SOURCE, pep.BASELINE)
+            summary.assert_called_once()
+            receipt = json.loads(output.getvalue())
+            self.assertEqual(receipt['status'], 'deferred_game_reset_required')
+            self.assertEqual(receipt['source'], SOURCE)
+            self.assertEqual(receipt['previous'], pep.BASELINE)
+            self.assertEqual(receipt['images'], IMAGES)
+            self.assertEqual(receipt['resetPaths'], paths[:20])
+            self.assertEqual(before, {p.name: p.read_bytes() for p in root.iterdir()})
+
+    def test_image_receipt_requires_exact_source_for_all_three_roles(self):
+        for wrong_role in (None, *pep.ROLES):
+            with self.subTest(wrong_role=wrong_role), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                for role in pep.ROLES:
+                    (root / (role + '.json')).write_text(json.dumps({'containerimage.digest': MANIFEST}))
+                receipt, output = root / 'receipt.json', root / 'output'
+                calls = []
+                def command(args):
+                    calls.append(args)
+                    role = pep.ROLES[(len(calls) - 1) // 2]
+                    if '--raw' in args:
+                        return json.dumps({'config': {'digest': CONFIG}}).encode()
+                    return json.dumps({'os': 'linux', 'architecture': 'amd64', 'config': {'Labels': {
+                        'org.opencontainers.image.revision': 'b' * 40 if role == wrong_role else SOURCE}}}).encode()
+                argv = ['pep_loop.py', 'images', '--metadata-dir', temp, '--source', SOURCE,
+                        '--receipt', str(receipt)]
+                with patch('sys.argv', argv), patch.dict(os.environ, {'GITHUB_OUTPUT': str(output)}), \
+                        patch.object(pep, 'command', side_effect=command):
+                    if wrong_role:
+                        with self.assertRaisesRegex(ValueError, 'exact main'):
+                            pep.main()
+                        self.assertFalse(receipt.exists())
+                        self.assertFalse(output.exists())
+                    else:
+                        pep.main()
+                        data = json.loads(receipt.read_text())
+                        self.assertEqual(data, {'source': SOURCE, 'Revision': SOURCE, 'images': IMAGES})
+                        self.assertEqual(json.loads(output.read_text().split('=', 1)[1]), IMAGES)
+
+    def test_workflow_maps_only_exit_78_to_deferred_and_preserves_failures(self):
+        workflow = (Path(__file__).resolve().parents[2] / '.github/workflows/pep-loop.yml').read_text()
+        block = workflow.split('          status=0', 1)[1].split('      - name: Failure summary', 1)[0]
+        script = 'status=0' + '\n' + '\n'.join(line[10:] for line in block.splitlines() if line.strip())
+        for status in (0, 1, 75, 78):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                sudo = root / 'sudo'
+                sudo.write_text('#!/bin/sh\nexit %s\n' % status)
+                sudo.chmod(0o755)
+                output, summary = root / 'output', root / 'summary'
+                env = {**os.environ, 'PATH': temp + ':' + os.defpath, 'GITHUB_OUTPUT': str(output),
+                       'GITHUB_STEP_SUMMARY': str(summary), 'SOURCE': SOURCE, 'MODE': 'auto',
+                       'GITHUB_WORKSPACE': temp}
+                result = subprocess.run(['bash', '-e', '-c', script], env=env, capture_output=True)
+                self.assertEqual(result.returncode, 0 if status in (0, 78) else status)
+                if status in (0, 78):
+                    self.assertEqual(output.read_text(), 'game_apply=%s\n' %
+                                     ('deferred' if status == 78 else 'applied'))
+                else:
+                    self.assertFalse(output.exists())
+                if status == 78:
+                    self.assertIn('별도 승인', summary.read_text())
+
     def test_wrong_server_is_denied_before_any_command(self):
         args = argparse.Namespace(server='PEP', mode='reset', source=SOURCE, checkout=Path('.'))
         with patch.object(pep, 'command') as cmd, self.assertRaises(ValueError):
@@ -1088,7 +1170,7 @@ class PepOperationTests(unittest.TestCase):
 
     def test_auto_and_refresh_cannot_implicitly_reset_either_exposure(self):
         for public in (False, True):
-            for operation in ('auto', 'refresh'):
+            for operation in ('refresh',):
                 with self.subTest(public=public, operation=operation):
                     calls = self.simulate('reset', operation=operation, public=public,
                                           current='scenario_990002', hold='implicit pep reset blocked')

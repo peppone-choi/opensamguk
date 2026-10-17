@@ -97,6 +97,8 @@ export {
   type KeyAction,
 } from './input';
 export { TOPDOWN_MAP_NOTICE, TopdownMap, type TopdownMapHandle, type TopdownMapProps, type TopdownMapStatus } from './TopdownMap';
+export { TOPDOWN_PROJECTION, type Projection } from './projection';
+export { DIMETRIC_PROJECTION, cellQuad, depthOrder, dimetricDepth, strategicProjection } from './projection-dimetric';
 export {
   DEFAULT_LAYERS,
   TopdownRenderer,

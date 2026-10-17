@@ -96,6 +96,7 @@ class DomesticReader(
                 DomesticSnapshot(
                     state = DomesticProjection(
                         profile = profile,
+                        worldMeta = selected.world.meta,
                         now = Phase(selected.world.currentYear, selected.world.currentMonth, selected.world.currentPhase),
                         people = people.sortedBy { it.id }.map { g ->
                             val position = positions.stateFor(g.id)

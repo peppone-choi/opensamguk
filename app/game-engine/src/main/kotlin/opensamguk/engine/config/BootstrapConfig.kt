@@ -43,6 +43,7 @@ class BootstrapConfig {
         @Value("\${RESET_TURNTERM:}") resetTurnTerm: String,
         @Value("\${RESET_MAXGENERAL:}") resetMaxGeneral: String,
         @Value("\${RESET_FIRST_TURN:}") resetFirstTurn: String,
+        @Value("\${RESET_TIME_MODE:}") resetTimeMode: String,
         // 같은 리셋이 고른 나머지 시나리오 옵션. 이름은 전부 deployer가 servers/*.env에 쓰는
         // 키 그대로다(gateway-api DeployService의 RESET_* 허용목록). 기본값을 여기에 두지 않는
         // 것은 의도적이다 — 미설정의 의미는 SeedBootstrap이 PHP install.php에서 읽어온
@@ -61,6 +62,7 @@ class BootstrapConfig {
         resetTurnTerm = resetTurnTerm,
         resetMaxGeneral = resetMaxGeneral,
         resetFirstTurn = resetFirstTurn,
+        resetTimeMode = resetTimeMode,
         resetFiction = resetFiction,
         resetExtend = resetExtend,
         resetBlockGeneralCreate = resetBlockGeneralCreate,

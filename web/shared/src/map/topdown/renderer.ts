@@ -4,7 +4,9 @@ import { chunksForRect, chunkKey, ChunkLoader } from './chunks';
 import { isOwnedNationVisual } from '../../nationVisual';
 import { chunksToStream, planChunks } from './streaming';
 import { bitmapPixels, dayPalette, overviewPixels, pixelsToCanvas } from './overviewPicture';
-import { viewLevel, visibleCellRect, cellToScreen } from './camera';
+import { viewLevel, visibleCellRect } from './camera';
+import { TOPDOWN_PROJECTION, type Projection } from './projection';
+import { cellQuad, depthOrder } from './projection-dimetric';
 import { FootprintIndex, hitTest, type HitResult, type SpriteHit } from './hitTest';
 import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
 import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitmap } from './loaders';
@@ -120,7 +122,14 @@ export class TopdownRenderer {
   private outOfScope: [number, number, number] | undefined;
   private readonly measureCache = new Map<string, { width: number; height: number }>();
 
-  constructor(private readonly glCanvas: HTMLCanvasElement, private readonly overlayCanvas: HTMLCanvasElement) {
+  /**
+   * `projection`: 칸 → 화면 투영(기본 탑다운). 셰이더를 투영마다 따로 엮으므로 바꾸려면 렌더러를 새로 만든다.
+   */
+  constructor(
+    private readonly glCanvas: HTMLCanvasElement,
+    private readonly overlayCanvas: HTMLCanvasElement,
+    readonly projection: Projection = TOPDOWN_PROJECTION,
+  ) {
     const gl = createGl(glCanvas);
     if (!gl) throw new Error('WebGL2 unavailable');
     this.gl = gl;
@@ -149,7 +158,7 @@ export class TopdownRenderer {
     const [index, palettes] = await kit;
     const palette = dayPalette(palettes);
     this.outOfScope = outOfScopeLandRgb(palette);
-    const terrain = new TerrainLayer(this.gl, shape, manifest.chunkSize);
+    const terrain = new TerrainLayer(this.gl, shape, manifest.chunkSize, undefined, this.projection);
     terrain.setKit({ index, palette, atlasColumns: index.width / 16 });
     this.terrain = terrain;
     this.manifest = manifest;
@@ -356,7 +365,7 @@ export class TopdownRenderer {
       sprites: this.sprites,
       footprints: this.footprintIndex ?? undefined,
       provinceAt: (col, row) => this.provinceAt(col, row),
-    });
+    }, this.projection);
   }
 
   /** 칸의 구역 번호(0부터, 모르면 −1): 받은 조각이 있으면 그 값, 없으면 개관 격자(4 × 4 블록 최빈)로. */
@@ -438,7 +447,7 @@ export class TopdownRenderer {
   }
 
   private streamChunks(manifest: BakeManifest): void {
-    const rect = visibleCellRect(this.camera, this.viewport, manifest.shape);
+    const rect = visibleCellRect(this.camera, this.viewport, manifest.shape, this.projection);
     const { wanted, visible: shown } = chunksToStream(rect, manifest.chunkSize, manifest.shape, (cx, cy) => this.loader!.peek(cx, cy) !== undefined);
     const visible = new Set(shown.map((c) => chunkKey(c.cx, c.cy)));
     const plan = planChunks(wanted, {
@@ -458,7 +467,7 @@ export class TopdownRenderer {
   }
 
   private visibleChunksReady(manifest: BakeManifest): boolean {
-    const rect = visibleCellRect(this.camera, this.viewport, manifest.shape);
+    const rect = visibleCellRect(this.camera, this.viewport, manifest.shape, this.projection);
     return chunksForRect(rect, manifest.chunkSize, manifest.shape, 0).every(({ cx, cy }) => this.loader!.peek(cx, cy) !== undefined);
   }
 
@@ -483,22 +492,34 @@ export class TopdownRenderer {
     const places = this.places;
     if (!places) return;
     const cam = this.camera;
-    const rect = visibleCellRect(cam, this.viewport, places.cities.length ? this.manifest!.shape : { cols: 0, rows: 0 });
+    const projection = this.projection;
+    const dimetric = projection.kind === 'dimetric';
+    const rect = visibleCellRect(cam, this.viewport, places.cities.length ? this.manifest!.shape : { cols: 0, rows: 0 }, projection);
     const inView = (col: number, row: number, margin: number) =>
       col >= rect.col0 - margin && col < rect.col1 + margin && row >= rect.row0 - margin && row < rect.row1 + margin;
 
+    // 다이메트릭은 뒤(위) → 앞(아래) 칸 차례로 그린다(거점 · 깃발 · 군단 깊이 정렬). 탑다운은 원래 차례 그대로다.
+    const cities = this.citiesInDepthOrder(places);
     if (level === 'county') {
-      for (const city of places.cities) {
+      for (const city of cities) {
         if (!city.site || !inView(city.cell[0], city.cell[1], 2) || !this.sites) continue;
         const nation = this.ownedNation(city.provinceIndex);
         const colour = nation?.color ?? null;
         const sprite = this.cached(`site|${city.site}|${colour ?? 'none'}`, () => drawSite(this.sites!, city.site!, colour));
-        const at = cellToScreen({ col: city.cell[0], row: city.cell[1] }, cam, this.viewport);
-        ctx.drawImage(sprite, at.x, at.y, cam.zoom, cam.zoom);
+        if (dimetric) {
+          // 임시 표시: 키트 거점 그림(정사각)을 칸 마름모 폭으로 세워 아래 꼭짓점에 발을 댄다. 새 거점 그림(B4c)이 오면 바뀐다.
+          const foot = projection.cellToScreen({ col: city.cell[0] + 1, row: city.cell[1] + 1 }, cam, this.viewport);
+          const side = projection.cellLengthToScreen(2, cam.zoom);
+          ctx.drawImage(sprite, foot.x - side / 2, foot.y - side, side, side);
+          continue;
+        }
+        const at = projection.cellToScreen({ col: city.cell[0], row: city.cell[1] }, cam, this.viewport);
+        const side = projection.cellLengthToScreen(1, cam.zoom);
+        ctx.drawImage(sprite, at.x, at.y, side, side);
       }
     }
     if (level !== 'ju' && this.flags) {
-      for (const city of places.cities) {
+      for (const city of cities) {
         if (level === 'commandery' && !city.isSeat && city.level !== 3) continue;
         const fp = city.footprint;
         if (!inView(fp.originCol, fp.originRow, 4)) continue;
@@ -506,7 +527,7 @@ export class TopdownRenderer {
         if (!nation) continue;
         const letter = [...nation.name][0] ?? '';
         const flag = this.cached(`flag|fringe|${nation.color}|${letter}`, () => drawFlag(this.flags!, 'fringe', nation.color, letter, FLAG_PX / 16, LABEL_FONT));
-        const corner = cellToScreen({ col: fp.originCol, row: fp.originRow }, cam, this.viewport);
+        const corner = projection.cellToScreen({ col: fp.originCol, row: fp.originRow }, cam, this.viewport);
         const x = corner.x - FLAG_PX * 0.08;
         const y = corner.y - FLAG_PX * 0.72;
         ctx.drawImage(flag, x, y, FLAG_PX, FLAG_PX);
@@ -520,13 +541,13 @@ export class TopdownRenderer {
         const fp = this.cityById.get(cityId)?.footprint;
         return fp ? { col: fp.originCol + fp.span / 2, row: fp.originRow + fp.span / 2 } : null;
       };
-      drawSupply(ctx, supplySegments(this.supply, centre, (cell) => cellToScreen(cell, cam, this.viewport), this.viewport), this.supplyColors);
+      drawSupply(ctx, supplySegments(this.supply, centre, (cell) => projection.cellToScreen(cell, cam, this.viewport), this.viewport), this.supplyColors);
     }
     const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
-    const pinBoxes = this.pinAvoid ? myLocationPinBoxes(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county') : [];
+    const pinBoxes = this.pinAvoid ? myLocationPinBoxes(projection.cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county') : [];
     corpsBoxes.push(...pinBoxes);
     if (level !== 'ju') {
-      const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
+      const toScreen = (cell: { col: number; row: number }) => projection.cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
       // 내 위치 핀과 같은 구역의 군단은 핀 옆으로 비킨다(D55) — 차례는 그대로, 자리만
       const pinProvince = this.pinProvinceIndex();
       const place = (marker: CorpsMarker) => {
@@ -534,8 +555,9 @@ export class TopdownRenderer {
         return pinProvince >= 0 && this.provinceIndexAt(marker.cell) === pinProvince ? nudgeFromPin(at, pinBoxes) : at;
       };
       // 아래 → 위: 첩보 → 보임 → 내 군단(D34). 누르기도 같은 차례로 위가 이긴다.
-      const placed = corpsDrawOrder(this.corps
-        .filter((marker) => inView(marker.cell.col, marker.cell.row, 40))
+      // 표지 세 상태 차례(D34)가 먼저이고, 다이메트릭이면 같은 상태 안에서 뒤 → 앞 칸 차례다
+      const placed = corpsDrawOrder(depthOrder(projection, this.corps
+        .filter((marker) => inView(marker.cell.col, marker.cell.row, 40)), (marker) => marker.cell)
         .map((marker) => ({ marker, place: place(marker) })));
       // 경로를 모두 먼저 그려 다른 부대 표지를 덮지 않게 한다
       if (this.layers.corpsRoutes) for (const { marker, place } of placed) this.corpsArt.drawRoute(ctx, marker, place.route);
@@ -561,7 +583,8 @@ export class TopdownRenderer {
       // 내 위치 핀이 선 城의 이름은 꼭 남긴다(실지도 결함 3 — 「낙양」이 제 군단 표지에 막혀 빠졌다)
       const homeCity = this.pinAvoid ? this.footprintIndex?.cityAt(Math.floor(this.pinAvoid.col), Math.floor(this.pinAvoid.row)) : undefined;
       const avoid = this.labelAvoid.length ? [...corpsBoxes, ...this.labelAvoid] : corpsBoxes;
-      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid, keep: homeCity == null ? undefined : `city:${homeCity}` })) {
+      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, {
+        hidden, avoid, keep: homeCity == null ? undefined : `city:${homeCity}`, projection })) {
         ctx.fillStyle = 'rgba(12,15,14,0.72)';
         ctx.fillRect(label.x, label.y, label.width, label.height);
         ctx.fillStyle = '#f5ecd6';
@@ -573,11 +596,28 @@ export class TopdownRenderer {
     }
     if (this.selectedCityId != null) {
       const city = places.cities.find((entry) => entry.id === this.selectedCityId);
-      if (city) {
+      if (city && dimetric) {
+        // 발자국 마름모 테두리(보드 sel: 노란 테두리 + 어두운 둘레)
         const { originCol, originRow, span } = city.footprint;
-        const centre = cellToScreen({ col: originCol + span / 2, row: originRow + span / 2 }, cam, this.viewport);
+        const quad = cellQuad(projection, originCol, originRow, span, cam, this.viewport);
+        const path = () => {
+          ctx.beginPath();
+          quad.forEach((point, index) => (index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y)));
+          ctx.closePath();
+        };
+        path();
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = 'rgba(12,15,14,0.8)';
+        ctx.stroke();
+        path();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffd36d';
+        ctx.stroke();
+      } else if (city) {
+        const { originCol, originRow, span } = city.footprint;
+        const centre = projection.cellToScreen({ col: originCol + span / 2, row: originRow + span / 2 }, cam, this.viewport);
         // 발자국보다 4px씩 크게, 멀리서도 보이게 40 이상(보드 sel 40)
-        const size = Math.max(span * cam.zoom + 8, 40);
+        const size = Math.max(projection.cellLengthToScreen(span, cam.zoom) + 8, 40);
         const x = Math.round(centre.x - size / 2);
         const y = Math.round(centre.y - size / 2);
         ctx.lineWidth = 4;
@@ -589,14 +629,26 @@ export class TopdownRenderer {
       }
     }
     if (this.me) {
-      const placement = drawMyLocation(ctx, this.me, (cell) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport), this.viewport);
+      const placement = drawMyLocation(ctx, this.me, (cell) => projection.cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport), this.viewport);
       sprites.push({ kind: 'me', id: 'me', rect: myLocationHitRect(placement), z: 10 });
     }
     // 핀을 지도 위 DOM 층이 그릴 때(meOverlay)도 누를 자리는 여기다 — 그래야 핀 위 끌기 · 휠 · 핀치가 지도로 간다
-    if (this.pinAvoid) sprites.push(...myLocationPinHits(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
+    if (this.pinAvoid) sprites.push(...myLocationPinHits(projection.cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     this.sprites = sprites;
     if (this.restLoaded) this.markHits(true);
   }
+
+  /** 城 그리는 차례: 다이메트릭이면 발자국 앞(아래) 꼭짓점 깊이 순, 탑다운이면 장소 표 차례. 장소 표가 바뀔 때만 다시 줄 세운다. */
+  private citiesInDepthOrder(places: PlacesData): readonly PlaceCity[] {
+    if (this.depthCities?.places !== places) {
+      const cities = depthOrder(this.projection, places.cities,
+        ({ footprint: fp }) => ({ col: fp.originCol + fp.span, row: fp.originRow + fp.span }));
+      this.depthCities = { places, cities };
+    }
+    return this.depthCities.cities;
+  }
+
+  private depthCities: { places: PlacesData; cities: readonly PlaceCity[] } | null = null;
 
   /** 지붕 색과 같은 규칙: id > 0이고 #rrggbb 색인 세력만 깃발 · 거점에 칠한다. */
   private ownedNation(provinceIndex: number): WorldNation | null {

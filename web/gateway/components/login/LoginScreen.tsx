@@ -18,9 +18,6 @@ import LoginForm from './LoginForm';
  *  머리줄은 반투명이라 띠 전체를 피한다(단추만 넣으면 동이가 띠 밑에서 흐렸다). 「이름」 단추도 피한다(모바일 동이와 겹쳤다). */
 const MAP_AVOID = '.gw31-intro, .gw31-login__card, .gw31-login__chiprow > *, .gw31-login__nations, .gw31-login__events, .gw31-login__notices, .gw31-login__foot, .gw31-head--overlay, .map-btn-stack';
 
-/** 소개 문구 — 승인됨 2026-10-01(D18). 지금 문장 그대로 쓴다. */
-const LOGIN_LEAD = '장수 한 명으로 시작해 순마다 명령을 세우고, 전투가 열리면 직접 지휘한다.';
-
 export type RegistryState = 'ok' | 'error';
 
 /**
@@ -81,15 +78,15 @@ export default function LoginScreen({ servers, registry }: {
                         <source type="image/webp" srcSet="/logo-wordmark.webp" />
                         <img className="gw31-intro__wordmark" src="/logo-wordmark.png" alt="오픈삼국" width={420} height={157} decoding="async" fetchPriority="high" />
                     </picture>
+                    {/* 제목 아래 설명 문장은 두지 않는다 — 사용자 2026-10-17(옛 D18 승인 문장을 걷었다). */}
                     <h2 className="gw31-intro__title os-serif">한 명의 장수에서 천하까지.</h2>
-                    <p className="gw31-intro__lead" data-copy-status="approved">{LOGIN_LEAD}</p>
                 </section>
                 <section className="os-panel os-panel--static gw31-login__card" id="login-form" aria-labelledby="login-title" tabIndex={-1}>
                     <h1 id="login-title" className="gw31-login__title os-serif">로그인</h1>
                     <Suspense fallback={<StateLine kind="loading" title="로그인 화면을 준비하는 중" />}>
                         <LoginForm />
                     </Suspense>
-                    <a href="#server-status" className="gw31-link gw31-login__to-status">서버 현황 — 세력 · 천하 정세 · 공지</a>
+                    <a href="#server-status" className="gw31-link gw31-login__to-status">서버 현황</a>
                 </section>
                 {/* 데스크톱 지도 조작 자리 — 로그인 카드 바로 아래(D41: 화면 높이와 무관하게 판에 가리지 않는다). 새 지도가 이리로 내보낸다. */}
                 <div className="gw31-login__mapctl" id="login-map-controls" />

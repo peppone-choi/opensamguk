@@ -18,7 +18,6 @@ function Go({ step }: { step: FirstStep }) {
 export function FirstSteps() {
     return (
         <div className={s.content}>
-            <p className={s.note} style={{ margin: 0 }}>처음이라면 이 순서대로 해 보세요. 단계마다 그 화면으로 바로 갈 수 있습니다.</p>
             <ol className={s.steps} aria-label="첫걸음 8단계">
                 {FIRST_STEPS.map((step) => (
                     <li key={step.key} className={s.step} data-first-step={step.key} data-first-step-id={step.explanationId} aria-labelledby={`first-step-${step.key}`}>

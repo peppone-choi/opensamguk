@@ -55,9 +55,11 @@ object EventPayloadCodec {
         val fact = when (role) {
             FactRole.COUNTIES, FactRole.MONEY, FactRole.GRAIN, FactRole.IRON, FactRole.TIMBER,
             FactRole.HORSES, FactRole.RENOWN_BEFORE, FactRole.RENOWN_AFTER -> EventFact.Amount(primitive.longNumber())
-            FactRole.RENOWN_CHANGE -> EventFact.Change(primitive.longNumber())
+            FactRole.RENOWN_CHANGE, FactRole.STAT_CHANGE, FactRole.FATIGUE_CHANGE,
+            FactRole.INJURY_CHANGE, FactRole.EXPERIENCE_CHANGE, FactRole.DEDICATION_CHANGE ->
+                EventFact.Change(primitive.longNumber())
             FactRole.TROOPS_BAND -> EventFact.TroopsBand(primitive.intId())
-            FactRole.OUTCOME -> EventFact.Outcome(primitive.stringId())
+            FactRole.OUTCOME, FactRole.COMMAND, FactRole.TRAINING_STAT -> EventFact.Outcome(primitive.stringId())
             FactRole.REASON -> EventFact.RewardReason(RewardReasonCode.valueOf(primitive.stringId()))
             FactRole.SOURCE -> EventFact.RenownSource(RenownEventSource.valueOf(primitive.stringId()))
         }

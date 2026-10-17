@@ -19,6 +19,8 @@ const snapshot = decodeJoiningSnapshot(golden)!;
 test('actual source facts render read-only with stable string identity and no owner/morale/command inventions', () => {
   render(<BattleJoiningSnapshot snapshot={snapshot} />);
   expect(screen.getByRole('heading', { name: '전투 참가 대기' })).toBeInTheDocument();
+  expect(screen.getByText('현재 이 화면에서는 배치 변경과 전투 명령을 보낼 수 없습니다.')).toBeInTheDocument();
+  expect(screen.queryByText(/배치를 확인합니다/)).not.toBeInTheDocument();
   expect(screen.getByRole('heading', { name: '내 부곡 1개' })).toBeInTheDocument();
   expect(screen.getByText('1. 부곡 701')).toBeInTheDocument();
   expect(screen.getByText('병력 100 · 행 0, 열 0')).toBeInTheDocument();

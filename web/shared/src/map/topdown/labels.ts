@@ -1,4 +1,5 @@
-import { cellToScreen, viewLevel } from './camera';
+import { viewLevel } from './camera';
+import { TOPDOWN_PROJECTION, type Projection } from './projection';
 import type { Camera, CellPoint, ViewLevel, Viewport } from './types';
 
 export type LabelKind = 'ju' | 'commandery' | 'commanderySeat' | 'county' | 'pass' | 'ferry';
@@ -61,6 +62,8 @@ export interface LayoutLabelOptions {
    * 다른 城 이름은 그대로 발자국 아래에만 둔다(보드 §4.2).
    */
   keep?: string;
+  /** 칸 → 화면 투영. 없으면 탑다운. */
+  projection?: Projection;
 }
 
 interface Box { x: number; y: number; width: number; height: number }
@@ -90,6 +93,7 @@ export function layoutLabels(
   options: LayoutLabelOptions = {},
 ): PlacedLabel[] {
   const padding = options.padding ?? DEFAULT_LABEL_PADDING;
+  const projection = options.projection ?? TOPDOWN_PROJECTION;
   const styles = LABEL_STYLES[viewLevel(cam.zoom)];
   const keep = options.keep;
   const visible = candidates
@@ -100,13 +104,13 @@ export function layoutLabels(
   for (const candidate of visible) {
     const style = styles[candidate.kind] as LabelStyle;
     const { width, height } = measure(candidate.text, style.fontPx, style.bold);
-    const center = cellToScreen(
+    const center = projection.cellToScreen(
       { col: candidate.anchor.col + 0.5, row: candidate.anchor.row + 0.5 },
       cam,
       viewport,
     );
     const region = candidate.kind === 'ju' || candidate.kind === 'commandery';
-    const half = ((candidate.footprintSpan ?? 1) / 2) * cam.zoom;
+    const half = projection.cellLengthToScreen((candidate.footprintSpan ?? 1) / 2, cam.zoom);
     // 州 · 郡 이름은 자리 가운데, 나머지는 城 발자국 바로 아래에 둔다. 꼭 남길 城 이름만 막히면 위 · 오른쪽 · 왼쪽도 본다.
     const spots = region
       ? [{ x: center.x - width / 2, y: center.y - height / 2 }]

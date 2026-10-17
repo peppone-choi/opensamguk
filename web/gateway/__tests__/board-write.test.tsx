@@ -104,6 +104,9 @@ describe('P-G08 커뮤니티 글쓰기', () => {
     expect(screen.getByRole('heading', { level: 1, name: '게시글 작성' })).toBeInTheDocument();
     expect(screen.getByLabelText('제목')).toHaveAttribute('maxLength', '120');
     for (const name of ['굵게', '기울임', '취소선']) expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    // 서식 단추가 이미 보이므로 서식 소개 문장 · 제목 위 머리말은 두지 않는다(사용자 2026-10-17).
+    expect(screen.queryByText(/기본 서식을 쓸 수 있습니다/)).toBeNull();
+    expect(document.querySelector('.gw31-board__eyebrow')).toBeNull();
     type('새 글', '<p><strong>첫 줄</strong><br>둘째 줄</p>');
     fireEvent.click(screen.getByRole('button', { name: '등록' }));
 

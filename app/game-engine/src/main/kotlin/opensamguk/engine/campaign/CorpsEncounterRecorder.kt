@@ -106,6 +106,11 @@ class CorpsEncounterRecorder(
                     nationId = before.nationId)
             }
         }
+        val origin = BattleOriginProducer.draft(encounter, forces, relations, world, metrics.tilesHash)
+        if (origin.draft != null) recorder.recordCampaignBattleOrigin(origin.draft)
+        else org.slf4j.LoggerFactory.getLogger(CorpsEncounterRecorder::class.java).warn(
+            "campaign_battle_origin_skipped encounter={} reason={} detail={} owner={}",
+            encounter.encounterId, origin.reason, origin.detail, origin.ownerGeneralId)
         return encounter.encounterId
     }
 }

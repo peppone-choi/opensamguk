@@ -209,6 +209,7 @@ class ChangeRecorder(
      */
     private val cityLedgerUpserts = linkedMapOf<Int, CityLedgerUpsert>()
     private val waterControlWrites = linkedMapOf<String, WaterControlWriteRow>()
+    private val campaignBattleOriginDrafts = linkedMapOf<String, opensamguk.logic.battle.realtime.CampaignBattleOriginDraft>()
     private var spatialWorldId: WorldId? = null
     private val provinceControlWrites = linkedMapOf<String, ProvinceControlWriteRow>()
     private val generalPositionWrites = linkedMapOf<Int, GeneralPositionWriteRow>()
@@ -272,6 +273,7 @@ class ChangeRecorder(
     private val nationArchiveSnapshots = mutableListOf<Map<String, Any?>>()
     private val reservedGeneralTurnPulls = mutableListOf<GeneralTurnPullRow>()
     private val generalTurnSlotWrites = mutableListOf<GeneralTurnSlotWriteRow>()
+    private val generalTurnClears = LinkedHashSet<Int>()
     private val reservedNationTurnPulls = mutableListOf<NationTurnPullRow>()
 
     /**
@@ -323,6 +325,7 @@ class ChangeRecorder(
             captureMap(diplomacyLetterUpdates) { copyStringMap(it) },
             captureMap(cityLedgerUpserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(waterControlWrites),
+            captureMap(campaignBattleOriginDrafts),
             captureMap(provinceControlWrites),
             captureMap(generalPositionWrites),
             Capture("spatialWorldId") { spatialWorldId = savedSpatialWorldId },
@@ -361,6 +364,7 @@ class ChangeRecorder(
             captureList(nationArchiveSnapshots) { copyStringMap(it) },
             captureList(reservedGeneralTurnPulls),
             captureList(generalTurnSlotWrites),
+            captureSet(generalTurnClears),
             captureList(reservedNationTurnPulls),
         ))
     }
@@ -412,7 +416,7 @@ class ChangeRecorder(
     }
 
     val isDirty: Boolean
-        get() = catchUpUpdate != null || turnFailureLedgerWrite != null ||
+        get() = campaignBattleOriginDrafts.isNotEmpty() || catchUpUpdate != null || turnFailureLedgerWrite != null ||
             generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
@@ -437,7 +441,7 @@ class ChangeRecorder(
             nationArchiveSnapshots.isNotEmpty() ||
             gameWinnerUpdates.isNotEmpty() || emperiorInserts.isNotEmpty() || hallUpserts.isNotEmpty() ||
             selectPoolMutations.isNotEmpty() || eventInserts.isNotEmpty() || eventDeletes.isNotEmpty() ||
-            reservedGeneralTurnPulls.isNotEmpty() || generalTurnSlotWrites.isNotEmpty() ||
+            reservedGeneralTurnPulls.isNotEmpty() || generalTurnSlotWrites.isNotEmpty() || generalTurnClears.isNotEmpty() ||
             reservedNationTurnPulls.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
@@ -1029,6 +1033,17 @@ class ChangeRecorder(
 
     fun provinceControlWrites(): ProvinceControlWriteBatch = ProvinceControlWriteBatch(provinceControlWrites.values.toList())
 
+    fun recordCampaignBattleOrigin(draft: opensamguk.logic.battle.realtime.CampaignBattleOriginDraft) {
+        gateMutation("record campaign battle origin")
+        val previous = campaignBattleOriginDrafts.putIfAbsent(draft.encounter.encounterId, draft)
+        require(previous == null || (previous.worldId == draft.worldId &&
+            previous.forces.snapshotId == draft.forces.snapshotId && previous.tilesHash == draft.tilesHash &&
+            previous.relations.snapshotId == draft.relations.snapshotId)) { "Conflicting encounter draft" }
+    }
+
+    fun campaignBattleOriginDrafts(): List<opensamguk.logic.battle.realtime.CampaignBattleOriginDraft> =
+        campaignBattleOriginDrafts.values.toList()
+
     fun generalPositionWrites(): GeneralPositionWriteBatch = GeneralPositionWriteBatch(generalPositionWrites.values.toList())
 
     fun provinceControlWritesFor(worldId: WorldId): ProvinceControlWriteBatch {
@@ -1107,6 +1122,7 @@ class ChangeRecorder(
     fun nationArchiveSnapshots(): List<Map<String, Any?>> = nationArchiveSnapshots.toList()
     fun reservedGeneralTurnPulls(): List<GeneralTurnPullRow> = reservedGeneralTurnPulls.toList()
     fun generalTurnSlotWrites(): List<GeneralTurnSlotWriteRow> = generalTurnSlotWrites.toList()
+    fun generalTurnClears(): Set<Int> = generalTurnClears.toSet()
     fun reservedNationTurnPulls(): List<NationTurnPullRow> = reservedNationTurnPulls.toList()
 
     fun recordGeneralTurnPull(generalId: Int, turnCnt: Int = 1,
@@ -1115,9 +1131,22 @@ class ChangeRecorder(
         reservedGeneralTurnPulls.add(GeneralTurnPullRow(generalId, turnCnt, expectedReservation))
     }
 
+    /** Keep the storage row behind the recorder boundary for application callers. */
+    fun recordGeneralTurnSlotWrite(generalId: Int, turnIdx: Int, actionCode: String,
+        argJson: String, brief: String, cancelCode: String? = null) {
+        recordGeneralTurnSlotWrite(GeneralTurnSlotWriteRow(generalId, turnIdx, actionCode, argJson, brief, cancelCode))
+    }
+
     fun recordGeneralTurnSlotWrite(row: GeneralTurnSlotWriteRow) {
         gateMutation("recordGeneralTurnSlotWrite")
         generalTurnSlotWrites.add(row)
+    }
+
+    /** Clear the retired actor's campaign queue; this is not a ring pull or actor deletion. */
+    fun recordGeneralTurnClear(generalId: Int) {
+        gateMutation("recordGeneralTurnClear")
+        require(generalId > 0) { "reservation actor must be positive" }
+        generalTurnClears.add(generalId)
     }
 
     fun recordNationTurnPull(nationId: Int, officerLevel: Int, turnCnt: Int = 1) {
@@ -1140,6 +1169,7 @@ class ChangeRecorder(
      */
     fun clear() {
         gateMutation("clear")
+        campaignBattleOriginDrafts.clear()
         catchUpUpdate = null
         turnFailureLedgerWrite = null
         generalPatches.clear()
@@ -1188,6 +1218,7 @@ class ChangeRecorder(
         nationSnapshots.clear()
         reservedGeneralTurnPulls.clear()
         generalTurnSlotWrites.clear()
+        generalTurnClears.clear()
         reservedNationTurnPulls.clear()
     }
 

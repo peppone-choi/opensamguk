@@ -39,7 +39,7 @@ class CourtActionHandlerTest {
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
         val handler = CourtHandler(world, ChangeRecorder(),
-            catalog = catalogWithPlanned("court.dispatch", "HANDLER_READY"))
+            catalog = catalogWithPlanned("court.dispatch", "UI_READY"))
 
         handler.onIssuerTurn(501)
 

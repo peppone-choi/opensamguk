@@ -288,7 +288,7 @@ class WorldSnapshotLoader(
     )
 
     private fun loadBugoks(): List<Bugok> = jdbc.query(
-        "SELECT id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied " +
+        "SELECT id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied, revision " +
             "FROM general_bugok WHERE world_id = ? ORDER BY id",
         { rs, _ ->
             Bugok(
@@ -297,6 +297,7 @@ class WorldSnapshotLoader(
                 morale = rs.getInt("morale"), fatigue = rs.getInt("fatigue"), provisions = rs.getInt("provisions"),
                 commanderRetainerId = rs.getObject("commander_retainer_id")?.let { (it as Number).toInt() },
                 commanderBonusApplied = rs.getBoolean("commander_bonus_applied"),
+                revision = rs.getLong("revision").also { require(!rs.wasNull() && it > 0) },
             )
         },
         worldId.value,

@@ -6,6 +6,8 @@ import opensamguk.logic.battle.realtime.CampaignBattleAuthorityStatus
 import opensamguk.logic.battle.realtime.CampaignBattleOriginCodec
 import opensamguk.logic.battle.realtime.CampaignBattleOriginOwner
 import opensamguk.logic.battle.realtime.CampaignBattleOriginSnapshot
+import opensamguk.logic.input.EncounterForces
+import opensamguk.infra.persistence.MetaJson
 import java.sql.Connection
 import java.sql.ResultSet
 
@@ -17,6 +19,7 @@ data class CampaignBattleCurrentRead(
     val currentBugokRevisions: Map<Int, Long>,
     val currentWorldVersion: Long,
     val currentWriterEpoch: Long,
+    val forces: EncounterForces? = null,
 )
 
 class JdbcCampaignBattleOriginReader {
@@ -43,14 +46,14 @@ class JdbcCampaignBattleOriginReader {
     private fun read(connection: Connection, worldId: WorldId, battleId: String, locked: Boolean): CampaignBattleCurrentRead? {
         require(battleId.isNotBlank() && battleId.length <= 128)
         val world = readWorld(connection, worldId, locked) ?: return null
-        val (origin, sha) = readOrigin(connection, worldId, battleId, locked) ?: return null
+        val (origin, sha, forces) = readOrigin(connection, worldId, battleId, locked) ?: return null
         require(origin.committedWorldVersion <= world.first && origin.writerEpoch == world.second) {
             "Origin is outside the current world writer generation"
         }
         val authorities = readAuthorities(connection, worldId, battleId, origin, locked)
         if (locked) lockGenerals(connection, worldId, origin)
         val revisions = readBugokRevisions(connection, worldId, origin, locked)
-        return CampaignBattleCurrentRead(origin, sha, authorities, revisions, world.first, world.second)
+        return CampaignBattleCurrentRead(origin, sha, authorities, revisions, world.first, world.second, forces)
     }
 
     private fun readWorld(connection: Connection, worldId: WorldId, locked: Boolean): Pair<Long, Long>? {
@@ -69,11 +72,11 @@ class JdbcCampaignBattleOriginReader {
 
     private fun readOrigin(
         connection: Connection, worldId: WorldId, battleId: String, locked: Boolean,
-    ): Pair<CampaignBattleOriginSnapshot, String>? {
+    ): Triple<CampaignBattleOriginSnapshot, String, EncounterForces>? {
         return connection.prepareStatement(
             "SELECT source_bytes, source_sha256, encounter_id, forces_snapshot_id, committed_world_version, " +
                 "writer_epoch, topology_revision, topology_hash, province_key, approach_key, tiles_hash, " +
-                "lock_generation, lock_set_revision FROM campaign_battle_origin WHERE world_id = ? AND battle_id = ?" +
+                "lock_generation, lock_set_revision, forces_json FROM campaign_battle_origin WHERE world_id = ? AND battle_id = ?" +
                 if (locked) " FOR UPDATE" else "",
         ).use { statement ->
             statement.setInt(1, worldId.value)
@@ -96,8 +99,10 @@ class JdbcCampaignBattleOriginReader {
                     origin.tilesHash == rows.getString("tiles_hash") &&
                     origin.lockGeneration == rows.strictLong("lock_generation") &&
                     origin.lockSetRevision == rows.strictLong("lock_set_revision"))
+                val forces = EncounterForces.readSealed(MetaJson.decode(requireNotNull(rows.getString("forces_json"))))
+                require(forces.snapshotId == origin.forcesSnapshotId && forces.encounterId == origin.encounterId)
                 require(!rows.next())
-                origin to sha
+                Triple(origin, sha, forces)
             }
         }
     }

@@ -408,10 +408,12 @@ class HostedCandidateTest(unittest.TestCase):
                     if path == Path(f"/proc/{browser}/environ"):
                         raise PermissionError("unit test")
                     return original_read(path)
-                with patch.object(Path, "read_bytes", read), patch.object(signal, "pidfd_send_signal") as send:
+                with patch.object(Path, "read_bytes", read), patch.object(signal, "pidfd_send_signal") as send, \
+                        patch.object(S["time"], "sleep") as wait:
                     with self.assertRaisesRegex(RuntimeError, "ownership cannot be verified"):
                         S["hosted_process_cleanup"](owner)
                     send.assert_not_called()
+                    self.assertEqual(wait.call_args_list, [unittest.mock.call(.01)] * 5)
                 self.assertTrue(self.process_alive(browser))
                 self.assertTrue((Path(owner["directory"])/"process.json").exists())
 
@@ -597,6 +599,74 @@ class HostedCandidateTest(unittest.TestCase):
                 if child.poll() is None:
                     child.kill()
                 child.wait(timeout=5)
+
+    def test_environment_denial_waits_for_same_tick_exit_before_removing_custody(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"],
+                                     env=dict(os.environ, QA_PROCESS_NONCE=owner["nonce"]), start_new_session=True)
+            try:
+                created = Path(f"/proc/{child.pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
+                receipt = Path(owner["directory"])/"process.json"
+                S["private_json"](receipt, {"pid": child.pid, "createdTick": created, "nonce": owner["nonce"]})
+                real_bytes, real_sleep = Path.read_bytes, S["time"].sleep
+                denied, waits = [], []
+                def read_bytes(path):
+                    if path == Path(f"/proc/{child.pid}/environ"):
+                        self.assertTrue(self.process_alive(child.pid))
+                        denied.append(True)
+                        raise PermissionError("exit raced with environ read")
+                    return real_bytes(path)
+                def finish_exit(delay):
+                    self.assertTrue(denied)
+                    self.assertTrue(receipt.exists())
+                    self.assertTrue(self.process_alive(child.pid))
+                    waits.append(delay)
+                    child.kill()  # Only our exact Popen child; cleanup must not signal it.
+                    import time
+                    deadline = time.monotonic() + 5
+                    while self.process_alive(child.pid) and time.monotonic() < deadline:
+                        real_sleep(.001)
+                    self.assertFalse(self.process_alive(child.pid))
+                    self.assertEqual(Path(f"/proc/{child.pid}/stat").read_text().rsplit(")", 1)[1].split()[19], created)
+                with patch.object(Path, "read_bytes", read_bytes), \
+                        patch.object(S["time"], "sleep", side_effect=finish_exit), \
+                        patch.object(signal, "pidfd_send_signal") as send:
+                    S["hosted_process_cleanup"](owner)
+                    send.assert_not_called()
+                self.assertEqual(waits, [.01])
+                self.assertFalse(receipt.exists())
+            finally:
+                if child.poll() is None:
+                    child.kill()
+                child.wait(timeout=5)
+
+    def test_environment_denial_reused_zombie_tick_never_removes_custody(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                real_bytes, real_read = Path.read_bytes, Path.read_text
+                denied = []
+                def read_bytes(path):
+                    if path == Path(f"/proc/{browser}/environ"):
+                        denied.append(True)
+                        raise PermissionError("unreadable process")
+                    return real_bytes(path)
+                def read(path, *args, **kwargs):
+                    value = real_read(path, *args, **kwargs)
+                    if denied and path == Path(f"/proc/{browser}/stat"):
+                        prefix, fields = value.rsplit(")", 1)
+                        fields = fields.split()
+                        fields[0], fields[19] = "Z", "0"
+                        return prefix + ") " + " ".join(fields)
+                    return value
+                with patch.object(Path, "read_bytes", read_bytes), patch.object(Path, "read_text", read), \
+                        patch.object(signal, "pidfd_send_signal") as send:
+                    with self.assertRaisesRegex(RuntimeError, "ownership cannot be verified"):
+                        S["hosted_process_cleanup"](owner)
+                    send.assert_not_called()
+                self.assertTrue(self.process_alive(browser))
+                self.assertTrue((Path(owner["directory"])/"process.json").exists())
 
     def test_original_successful_run_requires_all_seven_successes_and_provenance(self):
         record = self.run_record()

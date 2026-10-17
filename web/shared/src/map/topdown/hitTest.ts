@@ -1,4 +1,4 @@
-import { screenToCell } from './camera';
+import { TOPDOWN_PROJECTION, type Projection } from './projection';
 import type { Camera, ScreenPoint, Viewport } from './types';
 
 export type SpriteKind = 'me' | 'corps' | 'flag' | 'pass' | 'city';
@@ -75,8 +75,9 @@ export function hitTest(
   cam: Camera,
   viewport: Viewport,
   layers: HitTestLayers,
+  projection: Projection = TOPDOWN_PROJECTION,
 ): HitResult {
-  const at = screenToCell(point, cam, viewport);
+  const at = projection.screenToCell(point, cam, viewport);
   const cell = { col: Math.floor(at.col), row: Math.floor(at.row) };
 
   let top: SpriteHit | undefined;

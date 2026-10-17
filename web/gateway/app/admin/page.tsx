@@ -882,10 +882,7 @@ function ServerLifecycleControl({
                 busy={busy}
                 confirmLabel="리셋 실행"
                 message={
-                    <>
-                        <p className="deploy-note">PHP 리셋 화면 항목 기준으로 서버를 다시 초기화합니다.</p>
-                        {resetForm}
-                    </>
+                    resetForm
                 }
                 onConfirm={runReset}
                 onCancel={() => setMode(null)}

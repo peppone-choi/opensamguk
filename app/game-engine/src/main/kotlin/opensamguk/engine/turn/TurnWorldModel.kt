@@ -161,6 +161,7 @@ data class Bugok(
     val commanderRetainerId: Int? = null,
     /** 부장 배정 사기 보너스는 생애 한 번(PR 비평 S3 — 해제→재배정 반복 방지). */
     val commanderBonusApplied: Boolean = false,
+    val revision: Long = 1,
 )
 
 /**

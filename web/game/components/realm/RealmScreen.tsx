@@ -118,7 +118,7 @@ export default function RealmScreen() {
                     <StatusView kind="waiting" title="제도 확산이 아직 없습니다" body="제도를 세력이 정하고, 담당관이 시범 군현에서 시행하고, 넓혀 가는 흐름이 여기 보입니다. 서버가 아직 주지 않습니다." />
                 ) : null}
                 {tab === 'traditions' ? (
-                    <StatusView kind="waiting" title="편제 전통은 아직 없습니다" body="실명 · 지역 부대와 우리가 편성할 수 있는지는 서버가 아직 주지 않습니다. 준비되면 이 자리에 보입니다." />
+                    <StatusView kind="waiting" title="편제 전통은 아직 없습니다" body="실명 · 지역 부대와 우리가 편성할 수 있는지는 서버가 아직 주지 않습니다." />
                 ) : null}
             </div>
         </div>

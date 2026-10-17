@@ -41,6 +41,7 @@ class PhaseBoundary(
         siege.settleBoundary()
         RoadFortSiegeService(world, recorder, topology, metrics).settleBoundary()
         recomputeSupply(world, recorder, siege.besiegedCountyIds())
+        BarracksProductionBoundary(world, recorder).run()
     }
 
     /** 월 경계 보급선 출발(녹봉·보충 뒤). 경로·지연 계산에 이 경계의 지형을 쓴다. */

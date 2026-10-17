@@ -3,7 +3,7 @@
 // 남은 시간은 서버 규칙 핀이 있을 때만 · AI 표지는 AUTHORITY 가 온 부곡만.
 import { describe, expect, it } from 'vitest';
 import {
-    commandScope, EMPTY_SELECTION, groupNumbers, groupState, selectAllMine, selectOnly, sharedRally, toggleGroup, toggleUnit, toLiveView,
+    commandScope, EMPTY_SELECTION, groupNumbers, groupState, liveSelection, selectAllMine, selectOnly, sharedRally, toggleGroup, toggleUnit, toLiveView,
 } from '../lib/battle/live-view';
 import { battleCommand, decodeServerFrame, type Snapshot } from '../lib/battle/protocol';
 
@@ -59,6 +59,17 @@ describe('실시간 전투 보기', () => {
         expect(commandScope(v, EMPTY_SELECTION)).toBeNull();
         expect(commandScope(v, toggleUnit(EMPTY_SELECTION, 'RETINUE:12'))).toEqual({ sourceKeys: [R(12)] });
         expect(commandScope(v, selectAllMine(v))).toEqual({ allMine: true });
+    });
+
+    it('최신 스냅샷 고르기(GH350) — 사라진 id 는 빼고 새 부곡은 넣지 않는다, allMine 은 최신 전체, 대상이 모두 사라지면 null', () => {
+        const v = toLiveView(snapshot(), new Map());
+        const gone = toggleUnit(toggleUnit(EMPTY_SELECTION, 'RETINUE:12'), 'RETINUE:99');
+        expect([...liveSelection(v, gone).ids]).toEqual(['RETINUE:12']);
+        const same = toggleUnit(EMPTY_SELECTION, 'RETINUE:12');
+        expect(liveSelection(v, same)).toBe(same);
+        expect(liveSelection(v, { ids: new Set(['RETINUE:99']), allMine: true })).toEqual(selectAllMine(v));
+        expect(commandScope(v, toggleUnit(EMPTY_SELECTION, 'RETINUE:99'))).toBeNull();
+        expect(commandScope(v, { ids: new Set(['RETINUE:99']), allMine: true })).toBeNull();
     });
 
     it('판에서 고르기 — 사각형 안 내 부곡만(앞 고르기를 바꿈 · allMine 아님 · 남의 id 버림), 묶음 깃발 글자는 장수 차례', () => {

@@ -47,6 +47,7 @@ class DomesticContext(
         val ledger = nativeCounties
         return DomesticProjection(
             profile = world.ruleProfile,
+            worldMeta = state.meta,
             now = Phase(state.currentYear, state.currentMonth, state.currentPhase),
             people = generals.map { g ->
                 val position = positions?.stateFor(g.id)

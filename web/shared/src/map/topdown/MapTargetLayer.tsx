@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { TargetPicker } from '../../parts/MapTargetPicker';
 import type { TargetCandidate, TargetMarkerState } from '../../parts/types';
 import { cellToScreen } from './camera';
+import type { Projection } from './projection';
 import type { Camera, CellPoint } from './types';
 
 const SIZE = 44;
@@ -53,6 +54,8 @@ interface MapTargetLayerBase {
    * 그때는 false 로 둔다(둘 다 덮으면 후보 구역까지 어두워진다).
    */
   readonly dim?: boolean;
+  /** 지도와 같은 칸 → 화면 투영(TopdownMap projection). 없으면 탑다운. */
+  readonly projection?: Projection;
 }
 
 export type MapTargetLayerProps = MapTargetLayerBase & (
@@ -108,7 +111,7 @@ export function MapTargetLayer(props: MapTargetLayerProps) {
 
   const viewport = size && size.width > 0 ? { ...size, dpr: 1 } : null;
   const placed = camera && viewport
-    ? candidates.flatMap((candidate) => (candidate.cell ? [{ candidate, at: cellToScreen(centreOf(candidate.cell), camera, viewport) }] : []))
+    ? candidates.flatMap((candidate) => (candidate.cell ? [{ candidate, at: cellToScreen(centreOf(candidate.cell), camera, viewport, props.projection) }] : []))
     : [];
   const shown = viewport
     ? placed.filter(({ at }) => at.x >= EDGE && at.x <= viewport.width - EDGE && at.y >= EDGE && at.y <= viewport.height - EDGE)
@@ -117,7 +120,7 @@ export function MapTargetLayer(props: MapTargetLayerProps) {
   const offscreen = candidates.length - shown.length;
 
   const selected = placed.find(({ candidate }) => picker.markerStateOf(candidate.targetId) === 'selected');
-  const start = from && camera && viewport ? cellToScreen(centreOf(from), camera, viewport) : null;
+  const start = from && camera && viewport ? cellToScreen(centreOf(from), camera, viewport, props.projection) : null;
   const distance = selected?.candidate.distanceCells != null
     ? `${selected.candidate.distanceCells}칸${selected.candidate.distanceTurns != null ? ` · ${selected.candidate.distanceTurns}순` : ''}`
     : null;

@@ -3,8 +3,11 @@
 import { useMemo, useState } from 'react';
 import { useTargetPicker, type TargetCandidate } from '@opensamguk/ui';
 import {
+  DIMETRIC_PROJECTION,
   MapTargetLayer,
+  TOPDOWN_PROJECTION,
   TopdownMap,
+  strategicProjection,
   type Camera,
   type HitResult,
   type CorpsMarker,
@@ -80,9 +83,12 @@ function initialView(view: string, center?: string, zoom?: string) {
   return VIEWS[view] ?? VIEWS.luoyang;
 }
 
-export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
+export default function MapLab({ bakeUrl, kitUrl, view, center, zoom, projection: projectionParam }: {
   bakeUrl: string; kitUrl: string; view: string; center?: string; zoom?: string;
+  /** 투영(?proj=dimetric). 없으면 빌드 플래그 NEXT_PUBLIC_STRATEGIC_PROJECTION, 그것도 없으면 탑다운. */
+  projection?: string;
 }) {
+  const [projection, setProjection] = useState(() => strategicProjection(projectionParam ?? process.env.NEXT_PUBLIC_STRATEGIC_PROJECTION));
   const [handle, setHandle] = useState<TopdownMapHandle | null>(null);
   const [hit, setHit] = useState<HitResult | null>(null);
   const [layers, setLayers] = useState<MapLayers>({ provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true, fog: true, supply: true }); // 시험 세계에는 시야가 없다
@@ -99,7 +105,13 @@ export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
   return (
     <main style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0c0f0e', color: '#ece6d8' }}>
       <div style={{ display: 'flex', gap: 8, padding: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <strong>지도 시험(탑다운)</strong>
+        <strong>{projection.kind === 'dimetric' ? '지도 시험(2:1)' : '지도 시험(탑다운)'}</strong>
+        <button type="button" style={{ minHeight: 44 }} data-testid="map-lab-projection"
+          onClick={() => setProjection((was) => (was.kind === 'dimetric' ? TOPDOWN_PROJECTION : DIMETRIC_PROJECTION))}>
+          {projection.kind === 'dimetric' ? '탑다운으로' : '2:1로'}
+        </button>
+        {/* 2:1 그림은 키트 타일을 마름모로 늘린 임시 표시다(시험용, 최종 아트 아님). 새 전략 타일 · 거점 그림은 B4c */}
+        {projection.kind === 'dimetric' ? <small data-testid="map-lab-art-note">임시 그림(시험용 · 최종 아트 아님)</small> : null}
         {(['ju', 'commandery', 'county'] as const).map((level) => (
           <button key={level} type="button" style={{ minHeight: 44, minWidth: 44 }} onClick={() => handle?.setLevel(level)}>
             {{ ju: '주', commandery: '군', county: '현' }[level]}
@@ -138,10 +150,11 @@ export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
           me={showMe ? ME : null}
           corps={CORPS}
           supply={LAB_SUPPLY}
+          projection={projection}
           minimap
           style={{ position: 'absolute', inset: 0 }}
         />
-        {pick ? <MapTargetLayer camera={camera} candidates={targets} picker={picker} from={around} dim={false}
+        {pick ? <MapTargetLayer camera={camera} candidates={targets} picker={picker} from={around} dim={false} projection={projection}
           onBlocked={(candidate) => setReason(candidate.reason ?? '고를 수 없는 곳입니다')} /> : null}
       </div>
     </main>

@@ -193,6 +193,20 @@ class AuthPolicyHttpTest {
     }
 
     @Test
+    fun `refresh denial has the same 400 LOGIN_DISABLED response as login`() {
+        `when`(authService.refresh("refresh-token"))
+            .thenThrow(AuthPolicyDeniedException(AuthPolicyFailureCode.LOGIN_DISABLED))
+
+        mvc.perform(post("/auth/refresh").contentType(MediaType.APPLICATION_JSON)
+            .content("""{"refreshToken":"refresh-token"}"""))
+            .andExpect(status().isBadRequest)
+            .andExpect(content().json(
+                """{"message":"현재는 로그인이 금지되어있습니다!","status":400,"code":"LOGIN_DISABLED"}""", true,
+            ))
+        verify(authService).refresh("refresh-token")
+    }
+
+    @Test
     fun `bad credentials remain 401 without a policy code`() {
         `when`(authService.login(LoginRequest("tester", "incorrect")))
             .thenThrow(BadCredentialsException("bad credentials"))

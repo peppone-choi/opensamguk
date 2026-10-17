@@ -15,7 +15,7 @@ import { useId, useMemo, useState } from 'react';
 import { BattleBoardCanvas, type BoardScale } from '@/components/battle/BattleBoardCanvas';
 import { formatClock } from '@/lib/battle/join-view';
 import {
-    commandScope, EMPTY_SELECTION, groupNumbers, groupState, selectAllMine, selectOnly, sharedRally, toggleGroup, toggleUnit, type LiveView, type Selection,
+    commandScope, EMPTY_SELECTION, groupNumbers, groupState, liveSelection, selectAllMine, selectOnly, sharedRally, toggleGroup, toggleUnit, type LiveView, type Selection,
 } from '@/lib/battle/live-view';
 import {
     BATTLE_ORDERS, ORDER_LABEL, RALLY_HINT, RALLY_NUMBER, RALLY_POINTS, REJECT_TEXT, RESYNC_CAUSE, type BattleOrder, type CommandScope, type RallyPoint,
@@ -48,7 +48,9 @@ function liveNoticeText(notice: MoveNotice | null): string | null {
 }
 
 export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, onCommand }: BattleLiveProps) {
-    const [sel, setSel] = useState<Selection>(EMPTY_SELECTION);
+    const [picked, setSel] = useState<Selection>(EMPTY_SELECTION);
+    // 최신 스냅샷 기준 고른 상태 — 사라진 부곡은 표시 · 명령에서 빠진다(GH350). 렌더마다 다시 맞춰 오래된 고르기로 보내지 않는다.
+    const sel = useMemo(() => liveSelection(view, picked), [view, picked]);
     const [scale, setScale] = useState<BoardScale>({ kind: 'renderer', value: LIVE_START_SCALE });
     const [local, setLocal] = useState<string | null>(null);
     // 「판에서 고르기」(두 점) — 켜짐 · 첫 점을 찍었는지.

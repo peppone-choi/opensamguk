@@ -8,10 +8,11 @@ data class TacticalV2TroopBalance(
     val active: Int,
     val escaped: Int,
     val casualties: Int,
+    val captured: Int = 0,
 ) {
     init {
-        require(initial > 0 && active >= 0 && escaped >= 0 && casualties >= 0)
-        require(active.toLong() + escaped + casualties == initial.toLong()) {
+        require(initial > 0 && active >= 0 && escaped >= 0 && casualties >= 0 && captured >= 0)
+        require(active.toLong() + escaped + casualties + captured == initial.toLong()) {
             "source troop conservation failed"
         }
     }
@@ -58,6 +59,29 @@ class TacticalV2TroopLedger(
         val before = balances.getValue(key)
         return copy(balances = balances + (key to before.copy(
             active = 0, escaped = before.escaped + before.active)))
+    }
+
+    fun escapeOne(key: TacticalV2SourceKey): TacticalV2TroopLedger {
+        require(key.kind != TacticalV2SourceKind.CITY_GARRISON_BUGOK) { "city garrison cannot retreat" }
+        val before = balances.getValue(key)
+        require(before.active >= 1)
+        return copy(balances = balances + (key to before.copy(
+            active = before.active - 1, escaped = before.escaped + 1)))
+    }
+
+    fun captureOne(key: TacticalV2SourceKey): TacticalV2TroopLedger {
+        val before = balances.getValue(key)
+        require(before.active >= 1)
+        return copy(balances = balances + (key to before.copy(
+            active = before.active - 1, captured = before.captured + 1)))
+    }
+
+    /** New source identity is unique; replay handling belongs to the source registry. */
+    fun addSource(source: TacticalV2UnitSource): TacticalV2TroopLedger {
+        require(source.key !in balances) { "duplicate battle source" }
+        return copy(sources = (sources + source).sortedBy { it.key },
+            balances = balances + (source.key to TacticalV2TroopBalance(
+                source.initialTroops, source.initialTroops, 0, 0)))
     }
 
     /** All actual city sources are summed without percentages or a four-token conversion. */

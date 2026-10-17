@@ -12,6 +12,7 @@ import { loadOverviewPicture } from './overviewPicture';
 import type { MyLocation } from './myLocation';
 import type { CorpsMarker } from './corps';
 import { HAN_MAP_SHAPE, type Camera, type CellPoint, type ViewLevel, type Viewport } from './types';
+import { TOPDOWN_PROJECTION, type Projection } from './projection';
 import type { SupplyMapLine } from './supply';
 
 export interface TopdownMapHandle {
@@ -65,6 +66,11 @@ export interface TopdownMapProps {
    */
   notices?: boolean;
   onStatus?: (status: TopdownMapStatus) => void;
+  /**
+   * 칸 → 화면 투영. 없으면 탑다운(현행). 2:1 다이메트릭(B4)은 빌드 플래그 NEXT_PUBLIC_STRATEGIC_PROJECTION 을 읽은 화면이 넘긴다.
+   * 칸 좌표 · 누르기 결과(HitResult.cell)의 뜻은 투영과 상관없이 같다. 바꾸면 렌더러를 새로 만든다.
+   */
+  projection?: Projection;
 }
 
 export type TopdownMapStatus = 'loading' | 'ready' | 'error' | 'unsupported';
@@ -82,7 +88,7 @@ const TAP_SLOP_PX = 6;
 
 export function TopdownMap(props: TopdownMapProps) {
   const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, meOverlay = false, minimap = false, corps, supply, labelAvoid,
-    notices = true, onStatus, selectedCityId = null } = props;
+    notices = true, onStatus, selectedCityId = null, projection = TOPDOWN_PROJECTION } = props;
   const boxRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -107,13 +113,13 @@ export function TopdownMap(props: TopdownMapProps) {
   const apply = useCallback((next: Camera) => {
     const viewport = viewportRef.current;
     if (!viewport.width) return;
-    const camera = clampCamera(next, viewport, shape);
+    const camera = clampCamera(next, viewport, shape, projection);
     cameraRef.current = camera;
     rendererRef.current?.setView(camera, viewport);
     const level = viewLevel(camera.zoom);
     setDebug({ zoom: camera.zoom, level, col: camera.center.col, row: camera.center.row });
     callbacks.current.onViewChange?.({ camera, level });
-  }, [shape]);
+  }, [shape, projection]);
 
   // 렌더러 만들기 · 싣기
   useEffect(() => {
@@ -130,7 +136,7 @@ export function TopdownMap(props: TopdownMapProps) {
     markHits(false);
     let renderer: TopdownRenderer;
     try {
-      renderer = new TopdownRenderer(gl, overlay);
+      renderer = new TopdownRenderer(gl, overlay, projection);
     } catch {
       setStatus({ kind: 'unsupported' });
       // WebGL2가 없으면 천하 그림 한 장만 보인다. 장소 목록이 없는 화면(로그인 배경)도 있어 안내는 그림만 말한다.
@@ -160,12 +166,12 @@ export function TopdownMap(props: TopdownMapProps) {
         setLevel: (level) => {
           stopGlide();
           const cam = cameraRef.current;
-          if (cam) apply({ center: cam.center, zoom: levelZoom(level, viewportRef.current, shape) });
+          if (cam) apply({ center: cam.center, zoom: levelZoom(level, viewportRef.current, shape, projection) });
         },
         zoomStep: (dir) => {
           stopGlide();
           const cam = cameraRef.current;
-          if (cam) apply({ center: cam.center, zoom: stepStop(cam.zoom, zoomStops(viewportRef.current, shape), dir) });
+          if (cam) apply({ center: cam.center, zoom: stepStop(cam.zoom, zoomStops(viewportRef.current, shape, projection), dir) });
         },
         centerOn: (cell, zoom) => {
           stopGlide();
@@ -178,7 +184,7 @@ export function TopdownMap(props: TopdownMapProps) {
           stopGlide();
           const { originCol, originRow, span } = city.footprint;
           const centre = { col: originCol + span / 2, row: originRow + span / 2 };
-          apply({ center: centre, zoom: zoom ?? Math.max(cameraRef.current?.zoom ?? 0, levelZoom('county', viewportRef.current, shape)) });
+          apply({ center: centre, zoom: zoom ?? Math.max(cameraRef.current?.zoom ?? 0, levelZoom('county', viewportRef.current, shape, projection)) });
           callbacks.current.onSelect?.({ kind: 'city', id: cityId, cell: { col: Math.floor(centre.col), row: Math.floor(centre.row) } });
           return true;
         },
@@ -189,7 +195,7 @@ export function TopdownMap(props: TopdownMapProps) {
       renderer.dispose();
       rendererRef.current = null;
     };
-  }, [source.bakeUrl, source.kitUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [source.bakeUrl, source.kitUrl, projection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (world) rendererRef.current?.setWorld(world);
@@ -233,10 +239,10 @@ export function TopdownMap(props: TopdownMapProps) {
       const recover = initialView === 'cover' && cameraRef.current !== null && cameraRef.current === autoCameraRef.current;
       if (!cameraRef.current || recover) {
         const centre = { col: shape.cols / 2, row: shape.rows / 2 };
-        const fit = { center: centre, zoom: fitZoom(viewportRef.current, shape) };
+        const fit = { center: centre, zoom: fitZoom(viewportRef.current, shape, projection) };
         const start = initialView === 'fit' ? fit
-          : initialView === 'cover' ? { center: centre, zoom: coverZoom(viewportRef.current, shape) }
-            : 'cells' in initialView ? fitCellsView(initialView.cells, viewportRef.current, initialView.pad, shape) ?? fit
+          : initialView === 'cover' ? { center: centre, zoom: coverZoom(viewportRef.current, shape, projection) }
+            : 'cells' in initialView ? fitCellsView(initialView.cells, viewportRef.current, initialView.pad, shape, projection) ?? fit
               : initialView;
         apply(start);
         if (initialView === 'cover') autoCameraRef.current = cameraRef.current;
@@ -264,7 +270,7 @@ export function TopdownMap(props: TopdownMapProps) {
       const rect = box.getBoundingClientRect();
       const anchor = { x: event.clientX - rect.left, y: event.clientY - rect.top };
       const factor = wheelZoomFactor(event.deltaY, event.deltaMode as 0 | 1 | 2);
-      apply(zoomAt(cam, anchor, cam.zoom * factor, viewportRef.current, shape));
+      apply(zoomAt(cam, anchor, cam.zoom * factor, viewportRef.current, shape, projection));
       window.clearTimeout(settleTimer);
       // 멈추면 굴린 방향의 다음 멈춤 자리로 붙는다(가까운 쪽이면 한 칸 굴림이 맞춤 보기로 되돌아갔다)
       settleTimer = window.setTimeout(() => {
@@ -272,7 +278,7 @@ export function TopdownMap(props: TopdownMapProps) {
         const now = cameraRef.current;
         if (!now) return;
         const dir = now.zoom > burstFrom ? 1 : now.zoom < burstFrom ? -1 : 0;
-        apply(zoomAt(now, anchor, restingStop(now.zoom, zoomStops(viewportRef.current, shape), dir), viewportRef.current, shape));
+        apply(zoomAt(now, anchor, restingStop(now.zoom, zoomStops(viewportRef.current, shape, projection), dir), viewportRef.current, shape, projection));
       }, SETTLE_MS);
     };
     box.addEventListener('wheel', onWheel, { passive: false });
@@ -280,7 +286,7 @@ export function TopdownMap(props: TopdownMapProps) {
       box.removeEventListener('wheel', onWheel);
       window.clearTimeout(settleTimer);
     };
-  }, [apply, shape]);
+  }, [apply, shape, projection]);
 
   // 끌기 · 핀치 · 누르기
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -321,7 +327,7 @@ export function TopdownMap(props: TopdownMapProps) {
       const prev: [{ x: number; y: number }, { x: number; y: number }] = [a[1], b[1]];
       pointers.current.set(event.pointerId, point);
       const [c, d] = [...pointers.current.values()];
-      apply(pinch(prev, [c, d], cam, viewportRef.current, shape));
+      apply(pinch(prev, [c, d], cam, viewportRef.current, shape, projection));
       g.moved += TAP_SLOP_PX;
       return;
     }
@@ -331,7 +337,7 @@ export function TopdownMap(props: TopdownMapProps) {
     const dy = point.y - previous.y;
     g.moved = Math.max(g.moved, Math.hypot(point.x - g.startX, point.y - g.startY));
     g.inertia.track(dx, dy, event.timeStamp);
-    apply(panBy(cam, dx, dy));
+    apply(panBy(cam, dx, dy, projection));
   };
 
   const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -341,7 +347,7 @@ export function TopdownMap(props: TopdownMapProps) {
     const g = gesture.current;
     if (wasPinch) {
       const cam = cameraRef.current;
-      if (cam && pointers.current.size === 0) apply({ center: cam.center, zoom: nearestStop(cam.zoom, zoomStops(viewportRef.current, shape)) });
+      if (cam && pointers.current.size === 0) apply({ center: cam.center, zoom: nearestStop(cam.zoom, zoomStops(viewportRef.current, shape, projection)) });
       return;
     }
     if (g.moved < TAP_SLOP_PX) {
@@ -355,7 +361,7 @@ export function TopdownMap(props: TopdownMapProps) {
       const step = g.inertia.step(now - last);
       last = now;
       const cam = cameraRef.current;
-      if (cam) apply(panBy(cam, step.dx, step.dy));
+      if (cam) apply(panBy(cam, step.dx, step.dy, projection));
       if (!g.inertia.done) g.raf = requestAnimationFrame(glide);
     };
     g.raf = requestAnimationFrame(glide);
@@ -366,7 +372,7 @@ export function TopdownMap(props: TopdownMapProps) {
     pointers.current.delete(event.pointerId);
     gesture.current.inertia.stop();
     const cam = cameraRef.current;
-    if (cam && pointers.current.size === 0) apply({ center: cam.center, zoom: nearestStop(cam.zoom, zoomStops(viewportRef.current, shape)) });
+    if (cam && pointers.current.size === 0) apply({ center: cam.center, zoom: nearestStop(cam.zoom, zoomStops(viewportRef.current, shape, projection)) });
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -374,11 +380,15 @@ export function TopdownMap(props: TopdownMapProps) {
     const cam = cameraRef.current;
     if (!action || !cam) return;
     event.preventDefault();
-    if (action.type === 'pan') {
+    if (action.type === 'pan' && projection.kind !== 'topdown') {
+      // 다이메트릭은 칸 축이 화면에서 기울어 있다 — 방향키는 화면 방향으로 옮긴다(화면 작은 변의 1/4)
+      const px = Math.min(viewportRef.current.width, viewportRef.current.height) / 4;
+      apply(panBy(cam, -action.dx * px, -action.dy * px, projection));
+    } else if (action.type === 'pan') {
       const step = keyPanCells(viewportRef.current, cam.zoom);
       apply({ center: { col: cam.center.col + action.dx * step, row: cam.center.row + action.dy * step }, zoom: cam.zoom });
     } else if (action.type === 'zoom') {
-      apply({ center: cam.center, zoom: stepStop(cam.zoom, zoomStops(viewportRef.current, shape), action.dir) });
+      apply({ center: cam.center, zoom: stepStop(cam.zoom, zoomStops(viewportRef.current, shape, projection), action.dir) });
     } else {
       callbacks.current.onSelect?.({ kind: 'none', id: null, cell: { col: Math.floor(cam.center.col), row: Math.floor(cam.center.row) } });
     }
@@ -393,6 +403,7 @@ export function TopdownMap(props: TopdownMapProps) {
       aria-label={props.ariaLabel ?? '천하 지도 — 방향키로 옮기고 + · − 로 확대합니다'}
       tabIndex={0}
       data-map-renderer="topdown"
+      data-projection={projection.kind}
       data-map-status={status.kind}
       data-map-zoom={debug?.zoom.toFixed(3)}
       data-map-level={debug?.level}
@@ -428,6 +439,7 @@ export function TopdownMap(props: TopdownMapProps) {
             viewport={viewportRef.current}
             me={me?.cell ?? null}
             meColor={me?.nationColor ?? null}
+            projection={projection}
             onJump={(cell) => apply({ center: cell, zoom: cameraRef.current?.zoom ?? 16 })}
           />
         </div>

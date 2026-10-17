@@ -512,17 +512,27 @@ def hosted_process_cleanup(owner, process=None):
             except (PermissionError, OSError, ValueError, StopIteration) as exc:
                 if isinstance(exc, ValueError) and str(exc).startswith("Foreign process"):
                     raise
-                # Exiting Linux processes can become non-dumpable between the
-                # live stat and environ reads. Only a confirmed zombie with the
-                # SAME kernel start tick may be excluded; active denial still fails.
-                try:
-                    state, _, current_tick = identity(path)
-                    if state == "Z" and tick is not None and current_tick == tick:
-                        continue
-                except (FileNotFoundError, ProcessLookupError):
+                # Linux exit can deny environ before stat reports Z. Allow that
+                # same-tick transition up to five 10ms waits, never an active or
+                # reused PID exemption. Unknown identity and lasting denial fail.
+                exited = False
+                for attempt in range(6):
+                    try:
+                        state, _, current_tick = identity(path)
+                        if state == "Z" and tick is not None and current_tick == tick:
+                            exited = True
+                            break
+                        if (not isinstance(exc, PermissionError) or tick is None
+                                or current_tick != tick or attempt == 5):
+                            break
+                    except (FileNotFoundError, ProcessLookupError):
+                        exited = True
+                        break
+                    except (OSError, ValueError, IndexError):
+                        break
+                    time.sleep(.01)
+                if exited:
                     continue
-                except (OSError, ValueError, IndexError):
-                    pass
                 raise RuntimeError("CLEANUP_FAILED: process ownership cannot be verified"
                                    f" (pid={path.parent.name}, {type(exc).__name__})") from None
         return active

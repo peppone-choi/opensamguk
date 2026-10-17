@@ -95,6 +95,8 @@ data class DomesticProjection(
     val activeSiegeCountyIds: Set<Int> = emptySet(),
     /** null is unavailable, while an empty list confirms that there are no troop rows. */
     val troops: List<DomesticTroop>? = null,
+    /** Current persisted world metadata; reservation policy never predicts the future slot month. */
+    val worldMeta: Map<String, Any?> = emptyMap(),
 ) {
     private val peopleById = people.associateBy { it.id }
     private val countyById = counties.associateBy { it.id }

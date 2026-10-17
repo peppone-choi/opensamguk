@@ -79,9 +79,7 @@ export default function CommunityScreen() {
             <div className="gw31-board__main">
                 <div className="gw31-board__head">
                     <div className="gw31-board__intro">
-                        <p className="gw31-board__eyebrow">오픈삼국 커뮤니티</p>
                         <h1 className="gw31-board__h1 os-serif">커뮤니티 게시판</h1>
-                        <p className="gw31-card__line">서버 밖, 계정 단위 공간입니다. 세력 회의실 · 기밀실과 분리됩니다.</p>
                     </div>
                     {user ? (
                         <Link className="os-button os-button--primary gw31-board__write" href="/board/write" aria-label="글쓰기">

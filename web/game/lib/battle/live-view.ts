@@ -90,11 +90,19 @@ export function selectAllMine(view: LiveView): Selection {
     return { ids: new Set(view.units.map((u) => u.id)), allMine: true };
 }
 
+/** 최신 스냅샷에 맞춘 고른 상태 — 손으로 고른 것은 지금 내 부곡과의 교집합(새 부곡은 넣지 않는다), allMine 은 지금 내 부곡 전부. */
+export function liveSelection(view: LiveView, sel: Selection): Selection {
+    if (sel.allMine) return selectAllMine(view);
+    const mine = view.units.filter((u) => sel.ids.has(u.id));
+    return mine.length === sel.ids.size ? sel : { ids: new Set(mine.map((u) => u.id)), allMine: false };
+}
+
 /** 명령 대상 — 고른 것이 없으면 null(명령 막대가 사유와 함께 막는다). */
 export function commandScope(view: LiveView, sel: Selection): CommandScope | null {
-    if (sel.ids.size === 0) return null;
+    const units = view.units.filter((u) => sel.ids.has(u.id));
+    if (units.length === 0) return null;
     if (sel.allMine) return { allMine: true };
-    return { sourceKeys: view.units.filter((u) => sel.ids.has(u.id)).map((u) => u.sourceKey) };
+    return { sourceKeys: units.map((u) => u.sourceKey) };
 }
 
 /** 고른 부곡들의 지금 집결점이 모두 같으면 그 값, 섞였거나 모르면 null. */

@@ -8,6 +8,7 @@ import {
   type ViewLevel,
   type Viewport,
 } from './types';
+import { TOPDOWN_PROJECTION, type Projection } from './projection';
 
 /** Resting zoom levels in CSS px per cell (16 = original art 1×, 32 = nearest 2×). */
 export const ZOOM_STOPS = [0.5, 1, 2, 4, 8, 16, 32] as const;
@@ -15,18 +16,20 @@ export const DEFAULT_ZOOM = 16;
 export const MAX_ZOOM = 32;
 
 /** Largest zoom at which the whole map fits in the viewport. */
-export function fitZoom(viewport: Viewport, shape: MapShape): number {
-  return Math.min(viewport.width / shape.cols, viewport.height / shape.rows);
+export function fitZoom(viewport: Viewport, shape: MapShape, projection: Projection = TOPDOWN_PROJECTION): number {
+  const extent = projection.extent(shape);
+  return Math.min(viewport.width / extent.width, viewport.height / extent.height);
 }
 
 /** 화면을 빈 띠 없이 채우는 배율(긴 쪽이 넘친다). 배경 · 썸네일 지도용 첫 맞춤 — 멈춤 자리는 아니다. */
-export function coverZoom(viewport: Viewport, shape: MapShape): number {
-  return Math.min(MAX_ZOOM, Math.max(viewport.width / shape.cols, viewport.height / shape.rows));
+export function coverZoom(viewport: Viewport, shape: MapShape, projection: Projection = TOPDOWN_PROJECTION): number {
+  const extent = projection.extent(shape);
+  return Math.min(MAX_ZOOM, Math.max(viewport.width / extent.width, viewport.height / extent.height));
 }
 
 /** Sorted resting zooms for this viewport: [fit, ...ZOOM_STOPS above fit]. */
-export function zoomStops(viewport: Viewport, shape: MapShape): number[] {
-  const fit = fitZoom(viewport, shape);
+export function zoomStops(viewport: Viewport, shape: MapShape, projection: Projection = TOPDOWN_PROJECTION): number[] {
+  const fit = fitZoom(viewport, shape, projection);
   // 크기 0 인 뷰포트(숨은 컨테이너)는 맞춤 확대가 0 이 되므로 고정 멈춤 자리만 쓴다.
   if (!Number.isFinite(fit) || fit <= 0) return [...ZOOM_STOPS];
   if (fit > MAX_ZOOM) return [MAX_ZOOM];
@@ -81,26 +84,22 @@ export function viewLevel(zoom: number): ViewLevel {
 }
 
 /** Representative zoom for the [주|군|현] buttons, clamped to this viewport's stop range. */
-export function levelZoom(level: ViewLevel, viewport: Viewport, shape: MapShape): number {
-  const stops = zoomStops(viewport, shape);
+export function levelZoom(level: ViewLevel, viewport: Viewport, shape: MapShape, projection: Projection = TOPDOWN_PROJECTION): number {
+  const stops = zoomStops(viewport, shape, projection);
   const min = stops[0];
   if (level === 'ju') return min;
   const target = level === 'commandery' ? 4 : 16;
   return Math.min(MAX_ZOOM, Math.max(min, target));
 }
 
-export function cellToScreen(cell: CellPoint, cam: Camera, viewport: Viewport): ScreenPoint {
-  return {
-    x: (cell.col - cam.center.col) * cam.zoom + viewport.width / 2,
-    y: (cell.row - cam.center.row) * cam.zoom + viewport.height / 2,
-  };
+/** 칸 → 화면. 변환식은 projection.ts 한곳에 있다. */
+export function cellToScreen(cell: CellPoint, cam: Camera, viewport: Viewport, projection: Projection = TOPDOWN_PROJECTION): ScreenPoint {
+  return projection.cellToScreen(cell, cam, viewport);
 }
 
-export function screenToCell(point: ScreenPoint, cam: Camera, viewport: Viewport): CellPoint {
-  return {
-    col: (point.x - viewport.width / 2) / cam.zoom + cam.center.col,
-    row: (point.y - viewport.height / 2) / cam.zoom + cam.center.row,
-  };
+/** 화면 → 칸. 변환식은 projection.ts 한곳에 있다. */
+export function screenToCell(point: ScreenPoint, cam: Camera, viewport: Viewport, projection: Projection = TOPDOWN_PROJECTION): CellPoint {
+  return projection.screenToCell(point, cam, viewport);
 }
 
 /**
@@ -112,6 +111,7 @@ export function fitCellsView(
   viewport: Viewport,
   pad = 32,
   shape: MapShape = HAN_MAP_SHAPE,
+  projection: Projection = TOPDOWN_PROJECTION,
 ): Camera | null {
   if (cells.length === 0) return null;
   const cols = cells.map((cell) => cell.col);
@@ -120,15 +120,21 @@ export function fitCellsView(
   const minRow = Math.min(...rows);
   const width = Math.max(...cols) - minCol + 1;
   const height = Math.max(...rows) - minRow + 1;
-  const room = Math.min((viewport.width - pad * 2) / width, (viewport.height - pad * 2) / height);
-  const stops = zoomStops(viewport, shape).filter((stop) => stop <= DEFAULT_ZOOM);
+  const extent = projection.extent({ cols: width, rows: height });
+  const room = Math.min((viewport.width - pad * 2) / extent.width, (viewport.height - pad * 2) / extent.height);
+  const stops = zoomStops(viewport, shape, projection).filter((stop) => stop <= DEFAULT_ZOOM);
   const zoom = [...stops].reverse().find((stop) => stop <= room) ?? stops[0] ?? DEFAULT_ZOOM;
   return { center: { col: minCol + width / 2, row: minRow + height / 2 }, zoom };
 }
 
 /** Clamp a zoom to [smallest stop, MAX_ZOOM] for this viewport. */
-export function clampZoom(zoom: number, viewport: Viewport, shape: MapShape = HAN_MAP_SHAPE): number {
-  const min = zoomStops(viewport, shape)[0];
+export function clampZoom(
+  zoom: number,
+  viewport: Viewport,
+  shape: MapShape = HAN_MAP_SHAPE,
+  projection: Projection = TOPDOWN_PROJECTION,
+): number {
+  const min = zoomStops(viewport, shape, projection)[0];
   return Math.min(MAX_ZOOM, Math.max(min, zoom));
 }
 
@@ -142,26 +148,41 @@ export function zoomAt(
   newZoom: number,
   viewport: Viewport,
   shape: MapShape = HAN_MAP_SHAPE,
+  projection: Projection = TOPDOWN_PROJECTION,
 ): Camera {
-  const zoom = clampZoom(newZoom, viewport, shape);
-  const cell = screenToCell(anchor, cam, viewport);
+  const zoom = clampZoom(newZoom, viewport, shape, projection);
+  const cell = projection.screenToCell(anchor, cam, viewport);
+  const offset = projection.screenDeltaToCell(anchor.x - viewport.width / 2, anchor.y - viewport.height / 2, zoom);
   return {
     zoom,
     center: {
-      col: cell.col - (anchor.x - viewport.width / 2) / zoom,
-      row: cell.row - (anchor.y - viewport.height / 2) / zoom,
+      col: cell.col - offset.col,
+      row: cell.row - offset.row,
     },
   };
 }
 
 function clampAxis(center: number, cells: number, screenPx: number, zoom: number): number {
   // 맞춤 확대에서는 cells × zoom 이 부동소수로 화면 폭을 아주 조금 넘을 수 있다.
-  if (cells * zoom <= screenPx + 1e-6) return cells / 2;
+  if (TOPDOWN_PROJECTION.cellLengthToScreen(cells, zoom) <= screenPx + 1e-6) return cells / 2;
   return Math.min(cells, Math.max(0, center));
 }
 
-/** Keep the center inside the map; an axis smaller than the viewport is centered. */
-export function clampCamera(cam: Camera, viewport: Viewport, shape: MapShape): Camera {
+/**
+ * Keep the center inside the map; an axis smaller than the viewport is centered.
+ * 다이메트릭은 화면 축과 칸 축이 어긋나서 축마다 가운데에 둘 수 없다: 지도 전체가 화면에 들면 지도 가운데, 아니면 가운데 칸을 지도 안으로 자른다.
+ */
+export function clampCamera(cam: Camera, viewport: Viewport, shape: MapShape, projection: Projection = TOPDOWN_PROJECTION): Camera {
+  if (projection.kind !== 'topdown') {
+    const extent = projection.extent(shape);
+    const fits = extent.width * cam.zoom <= viewport.width + 1e-6 && extent.height * cam.zoom <= viewport.height + 1e-6;
+    return {
+      zoom: cam.zoom,
+      center: fits
+        ? { col: shape.cols / 2, row: shape.rows / 2 }
+        : { col: Math.min(shape.cols, Math.max(0, cam.center.col)), row: Math.min(shape.rows, Math.max(0, cam.center.row)) },
+    };
+  }
   return {
     zoom: cam.zoom,
     center: {
@@ -171,11 +192,32 @@ export function clampCamera(cam: Camera, viewport: Viewport, shape: MapShape): C
   };
 }
 
-/** Cells touched by the viewport, clipped to the map (inclusive-exclusive, col0 ≤ col1). */
-export function visibleCellRect(cam: Camera, viewport: Viewport, shape: MapShape): CellRect {
-  const topLeft = screenToCell({ x: 0, y: 0 }, cam, viewport);
-  const bottomRight = screenToCell({ x: viewport.width, y: viewport.height }, cam, viewport);
+/**
+ * Cells touched by the viewport, clipped to the map (inclusive-exclusive, col0 ≤ col1).
+ * 다이메트릭이면 화면 네 귀가 칸 좌표에서 마름모라 그 네 점을 감싸는 칸 사각형이다(탑다운은 왼쪽 위 · 오른쪽 아래 두 귀와 같다).
+ */
+export function visibleCellRect(cam: Camera, viewport: Viewport, shape: MapShape, projection: Projection = TOPDOWN_PROJECTION): CellRect {
   const clip = (value: number, max: number) => Math.min(max, Math.max(0, value));
+  if (projection.kind !== 'topdown') {
+    const corners = [
+      projection.screenToCell({ x: 0, y: 0 }, cam, viewport),
+      projection.screenToCell({ x: viewport.width, y: 0 }, cam, viewport),
+      projection.screenToCell({ x: viewport.width, y: viewport.height }, cam, viewport),
+      projection.screenToCell({ x: 0, y: viewport.height }, cam, viewport),
+    ];
+    const cols = corners.map((corner) => corner.col);
+    const rows = corners.map((corner) => corner.row);
+    const col0 = clip(Math.floor(Math.min(...cols)), shape.cols);
+    const row0 = clip(Math.floor(Math.min(...rows)), shape.rows);
+    return {
+      col0,
+      row0,
+      col1: Math.max(col0, clip(Math.ceil(Math.max(...cols)), shape.cols)),
+      row1: Math.max(row0, clip(Math.ceil(Math.max(...rows)), shape.rows)),
+    };
+  }
+  const topLeft = projection.screenToCell({ x: 0, y: 0 }, cam, viewport);
+  const bottomRight = projection.screenToCell({ x: viewport.width, y: viewport.height }, cam, viewport);
   const col0 = clip(Math.floor(topLeft.col), shape.cols);
   const row0 = clip(Math.floor(topLeft.row), shape.rows);
   const col1 = Math.max(col0, clip(Math.ceil(bottomRight.col), shape.cols));

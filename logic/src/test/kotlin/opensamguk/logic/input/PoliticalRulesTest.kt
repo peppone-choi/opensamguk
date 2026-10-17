@@ -60,7 +60,19 @@ class PoliticalRulesTest {
             assertIs<PoliticalAssessment.Rejected>(check(PoliticalInput.DISSOLVE,
                 state(person(nation = 1), countyOwner = 1))).reason)
         assertIs<PoliticalAssessment.Eligible>(check(PoliticalInput.DISSOLVE,
-            state(person(nation = 1, lord = true), countyOwner = 1)))
+            state(person(nation = 1, lord = true), countyOwner = 0)))
+    }
+
+    @Test fun `dissolve rejects territorial established and battling nations`() {
+        val wandering = state(person(nation = 1, lord = true))
+        for (blocked in listOf(wandering.copy(counties = wandering.counties.map { it.copy(nationId = 1) }),
+            wandering.copy(nations = wandering.nations.map { it.copy(level = 1) }))) {
+            assertEquals(PoliticalFailure.STATE_UNAVAILABLE,
+                assertIs<PoliticalAssessment.Rejected>(check(PoliticalInput.DISSOLVE, blocked)).reason)
+        }
+        val member = person(nation = 1).copy(id = 2, inBattle = true)
+        assertEquals(PoliticalFailure.BATTLE_PENDING, assertIs<PoliticalAssessment.Rejected>(
+            check(PoliticalInput.DISSOLVE, wandering.copy(people = wandering.people + member))).reason)
     }
 
     @Test fun `historical oath bond prevents a second oath`() {

@@ -287,17 +287,104 @@ class PoliticalHandlerTest {
         assertNull(DeploymentState.read(world.getGeneralById(actor.id)!!.meta))
     }
 
-    @Test fun `dissolution waits for the shared nation deletion path`() {
+    private fun dissolveCatalog(): InputCatalog {
+        val original = checkNotNull(javaClass.classLoader.getResource("command-catalog/input-catalog.json")).readText()
+        val row = Regex("""("inputId":\s*"action\.dissolve"[\s\S]*?"deliveryState":\s*")(PLANNED|DOMAIN_READY|HANDLER_READY|UI_READY)(")""")
+        assertTrue(row.containsMatchIn(original))
+        return InputCatalog.parse(row.replace(original, "${'$'}1HANDLER_READY${'$'}3"))
+    }
+
+    // action.dissolve: production handler reachability and wandering-nation deletion evidence.
+    @Test fun `production dissolve reaches the handler and deletes the wandering nation`() {
         val route = fixture.route()
         val actor = fixture.person(1031, 1, route.startCity, userId = "42", lord = true)
         val world = fixture.world(listOf(actor to route.start),
-            cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 1) else city })
-        assertEquals(InputRejection.NOT_DELIVERED.name,
-            assertIs<TurnOutcome.Rejected>(PoliticalHandler(world, ChangeRecorder(), DomesticContext())
-                .handle(PoliticalInput.DISSOLVE, actor.id, "{}", "dissolve-1031", 42)).code)
-        assertNotNull(world.getNationById(1))
-        assertEquals(1, world.getCityById(route.startCity)!!.nationId)
-        assertEquals(1, world.getGeneralById(actor.id)!!.nationId)
+            extraStateMeta = mapOf("init_year" to 199, "init_month" to 12))
+        val result = opensamguk.engine.turn.ReservedTurnHandler(world,
+            opensamguk.engine.turn.EngineGeneralActionPipelineBuilder(world, 199).registryFor(actor),
+            "dissolve-test", 199)
+            .handle(actor.id, opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn(
+                PoliticalInput.DISSOLVE, "{}", requestId = "dissolve-1031", reservationOwnerUserId = 42),
+                200, 1, "2000-01-01 00:00:00")
+        assertFalse(result.fellBack)
+        assertNull(result.denyReason)
+        assertIs<TurnOutcome.Applied>(result.inputOutcome)
+        assertNull(world.getNationById(1))
+    }
+
+    @Test fun `dissolution reuses extinction and clears military office retainer and reservation authority`() {
+        val route = fixture.route()
+        val actor = fixture.person(1031, 1, route.startCity, userId = "42", lord = true).copy(
+            gold = 9000, rice = 8000, npcState = 0, troopId = 1031,
+            meta = fixture.person(1031, 1, route.startCity, lord = true).meta + mapOf("belong" to 8,
+                "aux" to mapOf("max_belong" to 3), "permission" to "auditor", "officer_city" to route.startCity))
+        val member = fixture.person(1032, 1, route.startCity, lord = false).copy(gold = 7000, rice = 6000,
+            troopId = actor.id, meta = fixture.person(1032, 1, route.startCity, lord = false).meta +
+                (QueuedCourtAction.META_KEY to QueuedCourtAction("old-court", 42, "court.releaseCorps", "{}").toMetaValue()))
+        val other = fixture.person(1033, 2, route.startCity, lord = false)
+        val otherNation = Nation(2, "N2", "#222222")
+        val world = fixture.world(listOf(actor to route.start, member to route.start, other to route.start),
+            nations = listOf(Nation(1, "N1", "#111111", chiefGeneralId = actor.id), otherNation),
+            retainers = listOf(Retainer(31, actor.id, "EXISTING", member.id, member.name, "guest")))
+        world.createTroop(Troop(actor.id, 1, "old corps"))
+        world.consumeDirtyState()
+        val recorder = ChangeRecorder()
+        val handler = PoliticalHandler(world, recorder, DomesticContext(), dissolveCatalog())
+        val applied = assertIs<TurnOutcome.Applied>(handler.handle(PoliticalInput.DISSOLVE,
+            actor.id, "{}", "dissolve-once", 42))
+        assertEquals(listOf("dissolvedNationId:1"), applied.effects)
+        assertNull(world.getNationById(1))
+        assertEquals(otherNation, world.getNationById(2))
+        assertEquals(other, world.getGeneralById(other.id))
+        assertTrue(world.listDiplomacy().isEmpty())
+        assertTrue(world.listRetainers().isEmpty())
+        assertTrue(world.listTroops().isEmpty())
+        for (id in listOf(actor.id, member.id)) {
+            val free = checkNotNull(world.getGeneralById(id))
+            assertEquals(0, free.nationId)
+            assertEquals(0, free.officerLevel)
+            assertEquals(0, free.troopId)
+            assertFalse(LordStatus.read(free.meta))
+            assertEquals(0, free.meta["belong"])
+            assertEquals(0, free.meta["officer_city"])
+            assertEquals("normal", free.meta["permission"])
+            assertFalse(QueuedCourtAction.META_KEY in free.meta)
+            assertEquals(1000, free.gold)
+        }
+        assertEquals(1000, world.getGeneralById(actor.id)!!.rice)
+        assertEquals(6000, world.getGeneralById(member.id)!!.rice)
+        assertEquals(8, (world.getGeneralById(actor.id)!!.meta["aux"] as Map<*, *>)["max_belong"])
+        assertEquals(24, recorder.generalTurnSlotWrites().size)
+        assertTrue(recorder.generalTurnSlotWrites().all { it.actionCode == "휴식" && it.argJson == "{}" })
+        assertEquals(setOf(1), recorder.deletedNationIds())
+        assertEquals(listOf(actor.id), world.consumeDirtyState().deletedTroops)
+        assertEquals(applied, handler.handle(PoliticalInput.DISSOLVE, actor.id, "{}", "dissolve-once", 42))
+        assertEquals(PoliticalFailure.ALREADY_PROCESSED.name, assertIs<TurnOutcome.Rejected>(
+            handler.handle(PoliticalInput.DISSOLVE, actor.id, "{}", "another", 42)).code)
+    }
+
+    @Test fun `dissolution territory first month battle and changed owner reject without writes`() {
+        val route = fixture.route()
+        for (boundary in listOf("territory", "first-month", "battle", "owner")) {
+            val actor = fixture.person(1031, 1, route.startCity, userId = "42", lord = true)
+            val member = fixture.person(1032, 1, route.startCity, lord = false).let {
+                if (boundary == "battle") it.copy(meta = it.meta + (CorpsEncounter.META_KEY to "pending")) else it }
+            val world = fixture.world(listOf(actor to route.start, member to route.start),
+                cityChanges = { if (boundary == "territory" && it.id == route.startCity) it.copy(nationId = 1) else it },
+                extraStateMeta = if (boundary == "first-month") mapOf("init_year" to 200, "init_month" to 1) else emptyMap())
+            val recorder = ChangeRecorder()
+            val nations = world.listNations()
+            val cities = world.listCities()
+            val result = assertIs<TurnOutcome.Rejected>(PoliticalHandler(world, recorder, DomesticContext(), dissolveCatalog())
+                .handle(PoliticalInput.DISSOLVE, actor.id, "{}", boundary, if (boundary == "owner") 43 else 42))
+            assertEquals(when (boundary) { "owner" -> "FORBIDDEN"; "battle" -> "BATTLE_PENDING"; "first-month" -> "INITIAL_MONTH"; else -> "STATE_UNAVAILABLE" }, result.code)
+            assertEquals(actor, world.getGeneralById(actor.id))
+            assertEquals(member, world.getGeneralById(member.id))
+            assertEquals(nations, world.listNations())
+            assertEquals(cities, world.listCities())
+            assertTrue(recorder.deletedNationIds().isEmpty())
+            assertTrue(recorder.generalTurnSlotWrites().isEmpty())
+        }
     }
 
     @Test fun `founding promotes an existing lord's unestablished nation once`() {

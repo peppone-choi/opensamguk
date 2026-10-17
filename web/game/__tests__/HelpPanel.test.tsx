@@ -165,6 +165,8 @@ test('first steps (D21): eight steps to read — what · where · how, 「준비
     expect(steps).toEqual(['1단계 · 가입', '2단계 · 장수 생성', '3단계 · 출사', '4단계 · 발령', '5단계 · 공사', '6단계 · 등용', '7단계 · 행군', '8단계 · 전투']);
     // 진행 기록 · 완료 표시 · 잠김이 없다 — 설명만
     expect(document.body.textContent).not.toMatch(/완료|잠김|\d\s*\/\s*8|연습 서버/);
+    // 목록 위 소개 문장은 두지 않는다(사용자 2026-10-17)
+    expect(screen.queryByText(/처음이라면 이 순서대로/)).toBeNull();
     expect([...list.querySelectorAll('[data-first-step-id]')].map((el) => el.getAttribute('data-first-step-id'))).toEqual([
         'tutorial.signup', 'tutorial.createGeneral', 'tutorial.enlist', 'tutorial.dispatch',
         'tutorial.work', 'tutorial.employ', 'tutorial.march', 'tutorial.battle',

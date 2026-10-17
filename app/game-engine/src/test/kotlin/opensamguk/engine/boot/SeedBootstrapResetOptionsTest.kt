@@ -1,5 +1,10 @@
 package opensamguk.engine.boot
 
+import opensamguk.common.world.WorldId
+import opensamguk.engine.config.BootstrapConfig
+import opensamguk.engine.config.EngineProcessWorld
+import opensamguk.infra.seed.SelectedSourceUnavailable
+import opensamguk.logic.world.WorldTimeMode
 import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioImporter
 import kotlin.reflect.full.primaryConstructor
@@ -7,6 +12,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verifyNoInteractions
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.jdbc.core.JdbcTemplate
 
 /**
  * 턴 주기 외의 나머지 리셋 옵션(fiction / extend / block_general_create / npcmode / show_img_level)이
@@ -131,5 +140,77 @@ class SeedBootstrapResetOptionsTest {
             field.getInt(importer),
             "ScenarioImporter의 fiction 기본값이 PHP install.php:98 기본값과 다르다",
         )
+    }
+
+    @Test
+    fun `blank timing is absent and explicit general turns are supported`() {
+        for (raw in listOf(null, "", "   ")) assertEquals(null, SeedBootstrap.resolveTimeMode(raw))
+        for (raw in listOf("GENERAL_TURN", " GENERAL_TURN ")) {
+            assertEquals(WorldTimeMode.GENERAL_TURN, SeedBootstrap.resolveTimeMode(raw))
+        }
+    }
+
+    @Test
+    fun `realtime timing fails at bootstrap construction even when seeding is disabled`() {
+        val jdbc = mock(JdbcTemplate::class.java)
+        for (enabled in listOf(false, true)) {
+            for (raw in listOf("REALTIME", " REALTIME ")) {
+                val failure = assertFailsWith<IllegalStateException> {
+                    SeedBootstrap(worldId = WorldId(1), resetTimeMode = raw, seedEnabled = enabled).ensureSeeded(jdbc)
+                }
+                assertEquals("NOT_IMPLEMENTED: REALTIME strategic layer", failure.message)
+            }
+        }
+        verifyNoInteractions(jdbc)
+    }
+
+    @Test
+    fun `unknown timing fails at construction without consulting JDBC`() {
+        val jdbc = mock(JdbcTemplate::class.java)
+        for (raw in listOf("SEMI", "realtime", "GENERAL", "1", "REAL_TIME")) {
+            val failure = assertFailsWith<IllegalArgumentException> {
+                SeedBootstrap(worldId = WorldId(1), resetTimeMode = raw).ensureSeeded(jdbc)
+            }
+            assertEquals("RESET_TIME_MODE must be GENERAL_TURN or REALTIME", failure.message)
+        }
+        verifyNoInteractions(jdbc)
+    }
+
+    @Test
+    fun `explicit timing is not admitted as a D101 provenance option`() {
+        fun bootstrap(raw: String?) = SeedBootstrap(
+            scenarioCode = "scenario_3190", resetTurnTerm = "60", resetMaxGeneral = "50",
+            resetFirstTurn = "immediate", resetFiction = "1", resetExtend = "1",
+            resetBlockGeneralCreate = "1", resetNpcMode = "0", resetShowImgLevel = "3",
+            worldId = WorldId(1), resetTimeMode = raw,
+        )
+        val original = bootstrap(null).selectedParsedImporterOptions()
+        assertEquals(11, original.size)
+        for (raw in listOf("", "   ")) assertEquals(original, bootstrap(raw).selectedParsedImporterOptions())
+        for (raw in listOf("GENERAL_TURN", " GENERAL_TURN ")) {
+            assertFailsWith<SelectedSourceUnavailable> { bootstrap(raw).selectedParsedImporterOptions() }
+            assertFailsWith<SelectedSourceUnavailable> { bootstrap(raw).captureSelectedImportInputsReadOnly() }
+        }
+    }
+
+    @Test
+    fun `environment timing has an empty default and reaches the selected importer without JDBC`() {
+        val method = BootstrapConfig::class.java.methods.single { it.name == "seedBootstrap" }
+        assertEquals(1, method.parameters.count {
+            it.getAnnotation(Value::class.java)?.value == "\${RESET_TIME_MODE:}"
+        })
+        for ((raw, expected) in listOf("" to null, "GENERAL_TURN" to WorldTimeMode.GENERAL_TURN)) {
+            val bootstrap = BootstrapConfig().seedBootstrap(
+                scenarioCode = "scenario_990002", seedEnabled = true, scenarioDir = "", qaTurnTerm = "",
+                resetTurnTerm = "", resetMaxGeneral = "", resetFirstTurn = "", resetTimeMode = raw,
+                resetFiction = "", resetExtend = "", resetBlockGeneralCreate = "", resetNpcMode = "",
+                resetShowImgLevel = "", processWorld = EngineProcessWorld(1),
+            )
+            val selector = SeedBootstrap::class.java.declaredMethods.single { it.name == "selectedImporter" }
+                .apply { isAccessible = true }
+            val importer = selector.invoke(bootstrap, null, null, false) as ScenarioImporter
+            val field = ScenarioImporter::class.java.getDeclaredField("timeMode").apply { isAccessible = true }
+            assertEquals(expected, field.get(importer))
+        }
     }
 }

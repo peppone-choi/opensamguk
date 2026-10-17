@@ -56,7 +56,6 @@ export default function CommunityRail() {
                         <Portrait picture={user.picture ?? null} imageServer={user.imageServer ?? 0} size="icon-48" alt="" />
                         <div className="gw31-board__me-text">
                             <b>{user.nickname ?? user.username}</b>
-                            <p className="gw31-card__line gw31-card__line--muted">얼굴은 계정 초상입니다. 대표 장수는 계정 설정에서 정합니다.</p>
                             <Link className="gw31-link" href="/account#representative">대표 장수 바꾸기</Link>
                         </div>
                     </div>

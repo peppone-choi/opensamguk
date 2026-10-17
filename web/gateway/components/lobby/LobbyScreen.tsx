@@ -42,7 +42,6 @@ export default function LobbyScreen({ servers, registry }: {
                 <div className="gw31-lobby__main">
                     <div className="gw31-lobby__head">
                         <h1 className="gw31-lobby__title os-serif">게임 로비</h1>
-                        <p className="gw31-card__line gw31-card__line--muted">내 장수가 있는 서버는 바로 입장하고, 없는 서버는 장수를 만들어 시작합니다.</p>
                     </div>
                     <div className="gw31-chips gw31-lobby__filters" role="group" aria-label="서버 거르기">
                         {LOBBY_FILTERS.map((item) => (
@@ -66,7 +65,6 @@ export default function LobbyScreen({ servers, registry }: {
                             </div>
                         ))}
                         {servers.length > 0 && visible.length === 0 && <StateLine kind="empty" title="이 조건에 맞는 서버가 없습니다." />}
-                        <p className="gw31-card__line gw31-card__line--muted">현황을 받지 못한 서버는 「응답 없음」으로 보입니다.</p>
                     </section>
                 </div>
                 <aside className="gw31-lobby__side" aria-label="공지와 안내">

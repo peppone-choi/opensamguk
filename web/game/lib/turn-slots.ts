@@ -6,7 +6,7 @@
 // 서버에 아직 없어서(NOT_STARTED) 지금은 `/api/reserved-commands` 예약 링을 같은 모양으로 편다 — 링이 주지 않는
 // 날짜 · 시각 · 효력 표식은 null · 빈 목록으로 둔다. 명령 문장은 저장 arg와 서버 이름 목록으로 푼다. K4-02가 오면 fromTurnSlots를 더하고
 // useTurnSlots가 그쪽을 읽는다. 화면은 이 모양만 본다.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
 import { api } from './api';
 import { parseReservedDisplay, type ReservedDisplayResponse, type ReservedDisplaySlot } from './api/reservation-cancel-contract';
@@ -215,10 +215,21 @@ function useReservedCommandNames(generalId: number | null, serverId: string | un
     return { ...(loaded?.scope === scope ? loaded.names : EMPTY_COMMAND_NAMES), provinces: provinceRead?.key === readKey ? provinceRead.names : {}, equipment: equipmentRead?.key === equipmentKey ? equipmentRead.names : {}, people: employRead?.epoch === epoch ? employRead.names : {} };
 }
 
+/**
+ * 이 안의 사용처는 지금 읽기(refreshKey · 다시 읽기 번호)로 받은 링만 'ready'로 본다 — 새 읽기가 끝나기 전에는 'loading',
+ * 새 읽기가 실패하면 'error'. 예약 · 덮어쓰기 확인이 옛 순 · 세대의 링을 검증된 것으로 쓰지 않게 한다(작전실 명령 흐름).
+ * 바깥(기본)은 새 읽기 동안 옛 링을 그대로 보인다.
+ */
+export const CurrentTurnSlotsOnly = createContext(false);
+const READING: TurnSlotsLoad = { state: 'loading' };
+
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */
 export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: TurnSlotsLoad; reload: () => void; names: ReservedCommandNames } {
     const serverId = readServerCookie();
-    const [load, setLoad] = useState<Exclude<TurnSlotsLoad, { state: 'ready' }> | { state: 'ready'; response: ReservedDisplayResponse }>({ state: 'loading' });
+    const currentOnly = useContext(CurrentTurnSlotsOnly);
+    const [load, setLoad] = useState<{ state: 'loading' }
+        | { state: 'error'; message: string; readKey: number }
+        | { state: 'ready'; response: ReservedDisplayResponse; readKey: number }>({ state: 'loading' });
     const identity = JSON.stringify([serverId, generalId]);
     const [loadedFor, setLoadedFor] = useState(identity);
     if (loadedFor !== identity) {
@@ -228,6 +239,12 @@ export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: 
     const [seq, setSeq] = useState(0);
     const names = useReservedCommandNames(generalId, serverId, load.state === 'ready' ? load.response : null, refreshKey, seq);
     const reload = useCallback(() => setSeq((n) => n + 1), []);
+    // Read number: one more whenever refreshKey · seq changes, raised while rendering so the first frame of a new read already
+    // differs from the ring it replaces.
+    const readScope = JSON.stringify([refreshKey, seq]);
+    const [read, setRead] = useState({ scope: readScope, no: 0 });
+    if (read.scope !== readScope) setRead({ scope: readScope, no: read.no + 1 });
+    const readKey = read.scope === readScope ? read.no : read.no + 1;
     useTurnRefresh(reload);
     useEffect(() => {
         listeners.add(reload);
@@ -240,9 +257,12 @@ export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: 
         // revision (pre-B1 reader) is shown read-only with revision null — cancellation stays unavailable for it.
         api.reservedCommands(generalId)
             .then((res) => parseReservedDisplay(res, generalId))
-            .then((res) => { if (alive && readServerCookie() === serverId) setLoad({ state: 'ready', response: res }); })
-            .catch((e: unknown) => { if (alive && readServerCookie() === serverId) setLoad({ state: 'error', message: e instanceof Error ? e.message : '12순을 불러오지 못했습니다' }); });
+            .then((res) => { if (alive && readServerCookie() === serverId) setLoad({ state: 'ready', response: res, readKey }); })
+            .catch((e: unknown) => { if (alive && readServerCookie() === serverId) setLoad({ state: 'error', message: e instanceof Error ? e.message : '12순을 불러오지 못했습니다', readKey }); });
         return () => { alive = false; };
-    }, [generalId, serverId, refreshKey, seq]);
-    return { load: load.state === 'ready' ? { state: 'ready', slots: fromReservedCommands(load.response, names) } : load, reload, names };
+    }, [generalId, serverId, refreshKey, seq, readKey]);
+    // An earlier read never stands in for the current one here — not even a refreshKey that came back (A→B→A gets a new number).
+    if (load.state === 'loading') return { load, reload, names };
+    if (currentOnly && load.readKey !== readKey) return { load: READING, reload, names };
+    return { load: load.state === 'ready' ? { state: 'ready', slots: fromReservedCommands(load.response, names) } : { state: 'error', message: load.message }, reload, names };
 }

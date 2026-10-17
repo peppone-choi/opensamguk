@@ -288,6 +288,12 @@ open class JdbcFlushExecutor(
             if (payload.createdSieges.isNotEmpty()) siegeCreateMany(payload.worldId, payload.createdSieges)
             if (payload.updatedSieges.isNotEmpty()) siegeUpdate(payload.worldId, payload.updatedSieges)
 
+            // 8k. Finalize origins using this transaction's CAS fence and post-write native rows.
+            if (payload.campaignBattleOriginDrafts.isNotEmpty()) {
+                opensamguk.infra.battle.realtime.JdbcCampaignBattleOriginWriter().finalizeAndInsert(
+                    jdbc, payload.worldId, payload.worldStateUpdate, payload.campaignBattleOriginDrafts)
+            }
+
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.worldId, payload.eventInserts)
             }
@@ -367,7 +373,10 @@ open class JdbcFlushExecutor(
                     payload.reservedGeneralTurnPulls.filterNot { it.generalId in deletedGeneralIds })
             }
             if (payload.generalTurnSlotWrites.isNotEmpty()) {
-                generalTurnSlotWriteMany(payload.worldId, payload.generalTurnSlotWrites)
+                generalTurnSlotWriteMany(payload.worldId, payload.generalTurnSlotWrites, payload.cancelledResultEnvelope)
+            }
+            if (payload.generalTurnClears.isNotEmpty()) {
+                generalTurnClearMany(payload.worldId, payload.generalTurnClears)
             }
             if (isUnificationFlush) {
                 if (payload.hallUpserts.isNotEmpty()) hallUpsertMany(payload.worldId, payload.hallUpserts)
@@ -1735,13 +1744,14 @@ open class JdbcFlushExecutor(
                 .addValue("provisions", b.provisions)
                 .addValue("commander_retainer_id", b.commanderRetainerId)
                 .addValue("commander_bonus_applied", b.commanderBonusApplied)
+                .addValue("revision", b.revision)
         }.toTypedArray()
         jdbc.batchUpdate(
             """
             INSERT INTO general_bugok
-                (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied)
+                (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied, revision)
             VALUES
-                (:world_id, :id, :master_general_id, :name, :troops, :crew_type_id, :training, :morale, :fatigue, :provisions, :commander_retainer_id, :commander_bonus_applied)
+                (:world_id, :id, :master_general_id, :name, :troops, :crew_type_id, :training, :morale, :fatigue, :provisions, :commander_retainer_id, :commander_bonus_applied, :revision)
             """.trimIndent(),
             batch,
         )
@@ -1763,6 +1773,7 @@ open class JdbcFlushExecutor(
                 .addValue("provisions", b.provisions)
                 .addValue("commander_retainer_id", b.commanderRetainerId)
                 .addValue("commander_bonus_applied", b.commanderBonusApplied)
+                .addValue("revision", b.revision)
         }.toTypedArray()
         val affected = jdbc.batchUpdate(
             """
@@ -1770,8 +1781,8 @@ open class JdbcFlushExecutor(
                SET master_general_id = :master_general_id, crew_type_id = :crew_type_id,
                    name = :name, troops = :troops, training = :training, morale = :morale, fatigue = :fatigue,
                    provisions = :provisions, commander_retainer_id = :commander_retainer_id,
-                   commander_bonus_applied = :commander_bonus_applied, updated_at = now()
-             WHERE world_id = :world_id AND id = :id
+                   commander_bonus_applied = :commander_bonus_applied, revision = :revision, updated_at = now()
+             WHERE world_id = :world_id AND id = :id AND revision <= :revision
             """.trimIndent(),
             batch,
         )
@@ -2863,8 +2874,73 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("general_turn_pull", FlushVerb.UPDATE, consumed))
     }
 
-    private fun generalTurnSlotWriteMany(worldId: WorldId, rows: List<GeneralTurnSlotWriteRow>) {
-        val params = rows.map {
+    private fun generalTurnClearMany(worldId: WorldId, generalIds: List<Int>) {
+        val ids = generalIds.distinct().sorted()
+        // Use the reservation actor lock, in the same order as pull/admission; the outer execution
+        // fence and all earlier revision checks remain in force through this transaction's commit.
+        ids.forEach { generalId ->
+            val actors = jdbc.queryForList(
+                "SELECT id FROM general WHERE world_id = :world_id AND id = :general_id FOR UPDATE",
+                MapSqlParameterSource("world_id", worldId.value).addValue("general_id", generalId),
+                Int::class.java,
+            )
+            check(actors.size == 1) { "reservation actor does not exist" }
+        }
+        val deleted = jdbc.update(
+            """
+            DELETE FROM general_turn t USING world_state w
+             WHERE t.world_id = :world_id AND t.general_id IN (:ids)
+               AND w.id = t.world_id AND w.config->>'worldFormat' = :world_format
+            """.trimIndent(),
+            MapSqlParameterSource("world_id", worldId.value).addValue("ids", ids)
+                .addValue("world_format", opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name),
+        )
+        if (deleted > 0) lastOps.add(FlushExecOp("general_turn_clear", FlushVerb.DELETE_MANY, deleted))
+    }
+
+    private fun generalTurnSlotWriteMany(
+        worldId: WorldId,
+        rows: List<GeneralTurnSlotWriteRow>,
+        cancelledResultEnvelope: ((String, Int, Int, String) -> String)?,
+    ) {
+        // Lock and return the old request in the same transaction as the slot overwrite.
+        // Pulls precede this step, so already-settled slot zero requests are absent here.
+        val cancellations = rows.filter { it.cancelCode != null }
+        if (cancellations.isNotEmpty()) {
+            val envelopeOf = checkNotNull(cancelledResultEnvelope) { "cancelled slot writes require engine result factory" }
+            val version = checkNotNull(jdbc.queryForObject(
+                "SELECT world_version FROM world_state WHERE id = :world_id",
+                MapSqlParameterSource("world_id", worldId.value), Long::class.java))
+            val results = cancellations.flatMap { row ->
+                val params = MapSqlParameterSource()
+                    .addValue("world_id", worldId.value).addValue("general_id", row.generalId)
+                    .addValue("turn_idx", row.turnIdx).addValue("action_code", row.actionCode)
+                    .addValue("arg", row.argJson).addValue("brief", row.brief)
+                jdbc.query(
+                    """
+                    UPDATE general_turn AS slot
+                       SET action_code = :action_code, arg = CAST(:arg AS jsonb),
+                           brief = :brief, request_id = NULL
+                      FROM (SELECT world_id, general_id, turn_idx, request_id
+                              FROM general_turn
+                             WHERE world_id = :world_id AND general_id = :general_id
+                               AND turn_idx = :turn_idx FOR UPDATE) AS old
+                     WHERE slot.world_id = old.world_id AND slot.general_id = old.general_id
+                       AND slot.turn_idx = old.turn_idx
+                    RETURNING old.request_id
+                    """.trimIndent(), params,
+                ) { rs, _ -> rs.getString("request_id") }.filterNotNull().map { requestId ->
+                    CommandResultRow(requestId = requestId, resultSeq = 2,
+                        eventId = "command-result:${worldId.value}:$requestId:2",
+                        resultType = "executionRejected", ok = false, committedWorldVersion = version,
+                        payloadSchemaVersion = 1,
+                        envelopeJson = envelopeOf(requestId, row.generalId, row.turnIdx, checkNotNull(row.cancelCode)),
+                        sentAt = Instant.now(), terminalizeInbox = false)
+                }
+            }
+            if (results.isNotEmpty()) commandResultUpsertMany(worldId, results)
+        }
+        val params = rows.filter { it.cancelCode == null }.map {
             MapSqlParameterSource()
                 .addValue("world_id", worldId.value)
                 .addValue("general_id", it.generalId)
@@ -2873,7 +2949,7 @@ open class JdbcFlushExecutor(
                 .addValue("arg", it.argJson)
                 .addValue("brief", it.brief)
         }.toTypedArray()
-        jdbc.batchUpdate(
+        if (params.isNotEmpty()) jdbc.batchUpdate(
             """
             UPDATE general_turn
                SET action_code = :action_code,
@@ -3006,6 +3082,9 @@ data class FlushPayload(
     val eventDeletes: List<Int> = emptyList(),
     val reservedGeneralTurnPulls: List<GeneralTurnPullRow> = emptyList(),
     val generalTurnSlotWrites: List<GeneralTurnSlotWriteRow> = emptyList(),
+    val generalTurnClears: List<Int> = emptyList(),
+    /** Engine-owned wire serialization; evaluated only for overwritten persisted request ids. */
+    val cancelledResultEnvelope: ((String, Int, Int, String) -> String)? = null,
     val reservedNationTurnPulls: List<NationTurnPullRow> = emptyList(),
     val commandResults: List<CommandResultRow> = emptyList(),
     // --- OPENSAM-150 (R1) v2 도시 원장 채널 ---
@@ -3039,6 +3118,7 @@ data class FlushPayload(
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
     /** Canonical structured events share the world-state flush transaction. */
     val gameEvents: List<opensamguk.logic.record.GameEvent> = emptyList(),
+    val campaignBattleOriginDrafts: List<opensamguk.logic.battle.realtime.CampaignBattleOriginDraft> = emptyList(),
 )
 
 data class GeneralTurnPullRow(
@@ -3054,6 +3134,7 @@ data class GeneralTurnSlotWriteRow(
     val actionCode: String,
     val argJson: String,
     val brief: String,
+    val cancelCode: String? = null,
 )
 
 data class NationTurnPullRow(
