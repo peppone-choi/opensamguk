@@ -36,14 +36,13 @@ export function ProposalsBody({ load = WAITING }: { readonly load?: ProposalsLoa
                     <Waiting
                         row="K8-06"
                         title="이번 순 제안을 서버가 아직 주지 않습니다"
-                        body="부의 인물이 순마다 근거와 함께 할 일을 제안합니다. 준비되면 이 자리에 보입니다."
                     />
                 ) : null}
                 {load.state === 'unavailable' ? (
                     <StatusView kind="unavailable" title="이번 순 제안을 읽을 수 없습니다" onReload={load.onReload} />
                 ) : null}
                 {load.state === 'empty' ? (
-                    <StatusView kind="empty" title="이번 순 제안이 없습니다" body="부의 인물이 올린 제안이 이번 순에는 없습니다." />
+                    <StatusView kind="empty" title="이번 순 제안이 없습니다" />
                 ) : null}
                 <p className={styles.foot}>제안은 규칙으로 고른 것입니다 — 인물의 적성 · 성향과 지금 사실을 봅니다.</p>
             </Panel>
@@ -72,13 +71,13 @@ export function ProposalsBody({ load = WAITING }: { readonly load?: ProposalsLoa
 function Picked({ load }: { readonly load: ProposalsLoad }) {
     if (load.state === 'loading') return <StatusView kind="loading" rows={2} />;
     if (load.state === 'waiting') {
-        return <Waiting row="K8-06" title="아직 없습니다" body="제안을 고르면 서버가 본 근거와 확신이 여기 보입니다. 서버가 아직 주지 않습니다." />;
+        return <Waiting row="K8-06" title="아직 없습니다" body="서버가 아직 주지 않습니다." />;
     }
-    if (load.state === 'empty') return <StatusView kind="empty" title="고를 제안이 없습니다" body="이번 순에 올라온 제안이 생기면 여기서 고를 수 있습니다." />;
+    if (load.state === 'empty') return <StatusView kind="empty" title="고를 제안이 없습니다" />;
     return <p className={styles.note}>제안을 읽은 뒤 여기서 고를 수 있습니다.</p>;
 }
 
-function Waiting({ row, title, body }: { readonly row: string; readonly title: string; readonly body: ReactNode }) {
+function Waiting({ row, title, body }: { readonly row: string; readonly title: string; readonly body?: ReactNode }) {
     return (
         <div className={styles.wait} data-server-wait={row}>
             <StatusView kind="waiting" title={title} body={body} />

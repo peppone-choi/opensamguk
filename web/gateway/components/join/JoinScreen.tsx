@@ -29,7 +29,6 @@ export default function JoinScreen({ mapServerId }: { readonly mapServerId: stri
                     </picture>
                     <p className="gw31-intro__lead" data-copy-status="approved">계정은 한 번 만들면 계속 씁니다. 서버가 새로 시작하면 장수만 다시 만듭니다.</p>
                     <p className="gw31-join__warn" data-copy-status="approved">한 사람이 계정 여러 개를 쓰거나 남의 턴을 대신 넣으면 이용이 막힐 수 있습니다.</p>
-                    <p className="gw31-join__note">가입하면 바로 로그인되어 로비로 갑니다. 장수는 서버마다 따로 만듭니다.</p>
                 </section>
                 <section className="os-panel os-panel--static gw31-join__card" aria-labelledby="join-title">
                     <h1 id="join-title" className="gw31-login__title os-serif">회원 가입</h1>

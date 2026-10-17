@@ -14,7 +14,7 @@ export function BattleJoiningSnapshot({ snapshot }: { readonly snapshot: Joining
     <section className={styles.root} data-testid="battle-joining-snapshot" aria-label="전투 참가 대기">
       <header>
         <h2>전투 참가 대기</h2>
-        <p>서버가 정한 내 부곡 배치를 확인합니다. 현재 이 화면에서는 배치 변경과 전투 명령을 보낼 수 없습니다.</p>
+        <p>현재 이 화면에서는 배치 변경과 전투 명령을 보낼 수 없습니다.</p>
         <p>참가 마감: <time dateTime={snapshot.joinDeadlineAt}>{snapshot.joinDeadlineAt}</time></p>
       </header>
       <div className={styles.body}>

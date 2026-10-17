@@ -272,7 +272,6 @@
 .gw31-join__stage { position: relative; z-index: 10; pointer-events: none; }
 .gw31-join__stage > * { pointer-events: auto; }
 .gw31-join__warn { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--rust-2); }
-.gw31-join__note { margin: 0; padding: 8px 10px; font-size: 12.5px; line-height: 1.5; color: var(--info); background: rgba(122, 167, 199, 0.12); border: 1px solid var(--info-dim); }
 .gw31-join__card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: rgba(27, 32, 29, 0.97); border-color: var(--bronze-dim); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
 .gw31-field__help { font-size: 11.5px; color: var(--muted); }
 .gw31-field__error { font-size: 12px; color: var(--rust-2); }
@@ -528,7 +527,6 @@
 .gw31-board__main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .gw31-board__head { display: flex; align-items: flex-end; gap: 12px; }
 .gw31-board__intro { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.gw31-board__eyebrow { margin: 0; font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
 .gw31-board__h1 { margin: 0; font-size: 24px; font-weight: 900; }
 .gw31-board__write { gap: 6px; flex-shrink: 0; }
 .gw31-board__tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -572,7 +570,6 @@
 }
 @media (max-width: 767.98px) {
   .gw31-board__h1 { font-size: 20px; }
-  .gw31-board__eyebrow { display: none; }
   /* 글쓰기 = 오른쪽 아래 떠 있는 단추 56(로그인했을 때). 손님은 제목 줄의 「로그인 후 글쓰기」. */
   .gw31-board__write:not(.gw31-board__write--guest) { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 20; width: 56px; height: 56px; padding: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
   .gw31-board__write:not(.gw31-board__write--guest) .gw31-board__write-text { display: none; }

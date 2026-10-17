@@ -85,7 +85,7 @@ function PeopleBody({ mobile, scope, onScope, query, onQuery, order, onOrder, hr
             : scope === 'RETINUE'
                 ? <StatusView kind="empty" title="아직 거느린 인물이 없습니다" body="인재탐색 · 등용은 명령 목록에서 합니다."
                     actions={<Link href={hrefs.search} className="os-button os-button--primary">인재탐색 — 명령 목록에 넣기</Link>} />
-                : <StatusView kind="empty" title="이 세계에는 아직 인물이 없습니다" body="인물이 생기면 여기에 보입니다." />;
+                : <StatusView kind="empty" title="이 세계에는 아직 인물이 없습니다" />;
     } else if (mobile) {
         // 모바일 카드는 늘 미리보기 시트를 연다 — 소속 · 소재 · 5능력 · 적성 · 결속은 일람 응답에 있다(나 · 내 부가 아니어도 정보를 잃지 않는다, #1265 리뷰).
         body = <><PeopleCards rows={rows} onSelect={(r) => setSelected(r.generalId)} cityName={cityName} />{more}</>;

@@ -113,7 +113,7 @@ export default function LoginScreen({ servers, registry }: {
                         </div>
                     )}
                 </div>
-                <NoticeBoard className="gw31-login__notices" emptyBody={null} />
+                <NoticeBoard className="gw31-login__notices" />
                 <footer className="gw31-login__foot">
                     <PolicyLinks />
                 </footer>

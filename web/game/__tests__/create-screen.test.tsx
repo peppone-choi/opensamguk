@@ -89,6 +89,8 @@ describe('새 장수 만들기', () => {
         await settle();
         // 생성 옵션(K5-02)은 왔다 — 표지 없이 본관 후보가 보인다
         expectServerWaitGone(container, ['K5-02'], { value: '허현' });
+        // 화면 소개 문장은 두지 않는다(사용자 2026-10-17, 설명 문장 정리)
+        expect(screen.queryByText(/역할을 고르고 이름|어떤 자리로 시작할지/)).toBeNull();
         const roles = within(screen.getByRole('listbox', { name: '시작할 역할' })).getAllByRole('option');
         expect(roles[0]).toHaveAttribute('aria-selected', 'true');
         expect(roles[1]).toHaveAttribute('aria-disabled', 'true');

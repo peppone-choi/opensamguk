@@ -95,7 +95,7 @@ function Card({ view, selected, mobile, onPick }: { readonly view: HistoricalCar
 function Detail({ person, view, onStart, mobile = false }: { readonly person: HistoricalCreationPerson; readonly view: HistoricalCardView; readonly onStart: () => void; readonly mobile?: boolean }) {
     return (
         <div className={styles.detail}>
-            <p className={styles.help}>시나리오에 나온 인물 한 명을 골라 그 사람의 자리로 들어갑니다. 서버에 한 장뿐이라 먼저 고른 쪽이 가집니다.</p>
+            <p className={styles.help}>서버에 한 장뿐이라 먼저 고른 쪽이 가집니다.</p>
             <div className={styles.detailTop}>
                 <Portrait picture={person.portrait} size={mobile ? 'card-64' : 'card'} alt={`${person.name} 초상`} />
                 <div className={styles.detailStats}>
