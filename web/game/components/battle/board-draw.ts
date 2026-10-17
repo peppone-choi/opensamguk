@@ -1,6 +1,19 @@
 // 전투 판 그리기(BattleBoardCanvas 몫을 뗀 것) — 판 그림 · 배치 구역 · 내 부곡 · 묶음 깃발 · 끄는 사각형 · 두 점 고르기 첫 점.
 // 그린 화면 좌표(칸 · 부곡 · 묶음)와 view 를 돌려준다 — 누르기 판단 · e2e data-* 가 같은 값을 쓴다.
-import { cellPolygon, centerView, fitView, pieceOrigin, type BattleKit, type BoardPicture, type BoardView } from '@opensamguk/ui/battle';
+// 판 그림 v2(assets.art 가 있을 때): 팩에 부곡 병종 그림(slot)이 있으면 칸 테두리 위에 그 그림, 없으면 지금처럼 마름모.
+import {
+    cellPolygon,
+    centerView,
+    drawArtUnit,
+    fitView,
+    pieceOrigin,
+    resolveUnitFrame,
+    type BattleKit,
+    type BoardPicture,
+    type BoardView,
+    type LoadedArtpack,
+    type UnitFacing,
+} from '@opensamguk/ui/battle';
 import type { Cell } from '@/lib/battle/protocol';
 import { CLUSTER_RADIUS, clusterMarks, type MarkCluster, type ScreenMark, type ScreenPoint } from '@/lib/battle/board-select';
 
@@ -18,10 +31,15 @@ export interface BoardUnitMark {
     readonly ai?: boolean;
     /** 장수 차례(1부터, 목록 「장수 n」) — 축소했을 때 묶음 깃발 글자. */
     readonly group?: number;
+    /** 판 그림 v2 — 팩 유닛 칸(병종 코드) · 방향 · 진영색. 서버가 아직 주지 않아 지금은 비어 있다(마름모). */
+    readonly slot?: string;
+    readonly facing?: UnitFacing;
+    readonly colour?: string;
 }
 
 export interface BoardDrawInput {
-    readonly assets: { readonly kit: BattleKit; readonly picture: BoardPicture };
+    /** art = 판 그림 v2 의 아트 팩(기능 플래그가 켜졌을 때만). */
+    readonly assets: { readonly kit: BattleKit; readonly picture: BoardPicture; readonly art?: LoadedArtpack | null };
     readonly width: number;
     readonly height: number;
     readonly units: readonly BoardUnitMark[];
@@ -91,13 +109,17 @@ export function drawBattleBoard(ctx: CanvasRenderingContext2D, input: BoardDrawI
         const pts = poly(u.cell);
         cells[`${u.cell.row}:${u.cell.col}`] = { x: (pts[1].x + pts[3].x) / 2, y: (pts[0].y + pts[2].y) / 2 };
         if (clustered.has(u.id)) continue;
+        const art = assets.art && resolveUnitFrame(assets.art.manifest, u.slot, 'idle', u.facing ?? 'sw', 0) ? assets.art : null;
         path(pts);
         const on = selectedIds.has(u.id);
-        ctx.fillStyle = on ? 'rgba(255,211,109,.55)' : 'rgba(211,176,100,.35)';
-        ctx.fill();
+        if (!art) {
+            ctx.fillStyle = on ? 'rgba(255,211,109,.55)' : 'rgba(211,176,100,.35)';
+            ctx.fill();
+        }
         ctx.lineWidth = on ? 2.5 : 1.5;
         ctx.strokeStyle = on ? '#ffd36d' : '#d3b064';
         ctx.stroke();
+        if (art) drawArtUnit(ctx, art, { slot: u.slot, facing: u.facing, colour: u.colour }, cells[`${u.cell.row}:${u.cell.col}`], view);
         ctx.fillStyle = '#ece6d8';
         ctx.font = `700 ${Math.max(10, Math.round(9 * view.scale))}px sans-serif`;
         ctx.textAlign = 'center';
