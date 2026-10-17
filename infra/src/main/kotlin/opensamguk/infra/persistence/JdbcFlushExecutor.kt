@@ -1782,7 +1782,7 @@ open class JdbcFlushExecutor(
                    name = :name, troops = :troops, training = :training, morale = :morale, fatigue = :fatigue,
                    provisions = :provisions, commander_retainer_id = :commander_retainer_id,
                    commander_bonus_applied = :commander_bonus_applied, revision = :revision, updated_at = now()
-             WHERE world_id = :world_id AND id = :id AND revision <= :revision
+             WHERE world_id = :world_id AND id = :id AND revision < :revision
             """.trimIndent(),
             batch,
         )

@@ -102,11 +102,13 @@ internal class BattleOriginProducerIT : BattleOriginProducerFixture() {
         assertTrue(expected.matches(loaded)); assertEquals(origin.owners, current.currentOwners)
     }
     @Test fun `absent or partial fence skips only origin and commits native content`() {
-        for (fence in listOf(emptyMap(), mapOf("expected_world_version" to 0L), mapOf("writer_epoch" to 7L))) {
-            val world = world(); world.updateBugok(world.getBugokById(11)!!.copy(provisions = 602))
+        val world = world()
+        for ((index, fence) in listOf(emptyMap(), mapOf("expected_world_version" to 0L), mapOf("writer_epoch" to 7L)).withIndex()) {
+            val provisions = 602 + index
+            world.updateBugok(world.getBugokById(11)!!.copy(provisions = provisions))
             val base = payload(world, null)
             executor.flush(base.copy(worldStateUpdate = base.worldStateUpdate + fence))
-            assertEquals(0, count()); assertEquals(602, jdbc.queryForObject("SELECT provisions FROM general_bugok WHERE id=11", Int::class.java))
+            assertEquals(0, count()); assertEquals(provisions, jdbc.queryForObject("SELECT provisions FROM general_bugok WHERE id=11", Int::class.java))
             assertReason("NO_WORLD_FENCE")
         }
     }
@@ -179,6 +181,57 @@ internal class BattleOriginProducerIT : BattleOriginProducerFixture() {
         assertFailsWith<IllegalStateException> { executor.flush(payload(world)) }
         assertEquals(0L, version()); assertEquals(0, count())
         assertEquals(5L, jdbc.queryForObject("SELECT revision FROM general_bugok WHERE id=11", Long::class.java))
+    }
+    @Test fun `equal bugok revision cannot overwrite different content and rolls back earlier native writes`() {
+        jdbc.update("UPDATE general_bugok SET revision=2, provisions=650 WHERE world_id=1 AND id=11")
+        val goldBefore = jdbc.queryForObject("SELECT gold FROM general WHERE world_id=1 AND id=1", Int::class.java)
+        val world = world()
+        world.updateBugok(world.getBugokById(11)!!.copy(provisions = 999))
+        val changed = PerTurnOverlay.toLogicGeneral(world.getGeneralById(1)!!.copy(gold = 777))
+        val p = payload(world).copy(updatedGenerals = listOf(changed))
+        assertEquals(2L, p.updatedBugoks.single().revision)
+
+        val failure = assertFailsWith<IllegalStateException> { executor.flush(p) }
+        assertTrue(failure.message.orEmpty().contains("general_bugok UPDATE"))
+        assertEquals(0L, version())
+        assertEquals(goldBefore, jdbc.queryForObject("SELECT gold FROM general WHERE world_id=1 AND id=1", Int::class.java))
+        assertEquals(650, jdbc.queryForObject("SELECT provisions FROM general_bugok WHERE world_id=1 AND id=11", Int::class.java))
+        assertEquals(2L, jdbc.queryForObject("SELECT revision FROM general_bugok WHERE world_id=1 AND id=11", Long::class.java))
+        assertEquals(0, count())
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM campaign_battle_owner_authority", Int::class.java))
+    }
+    @Test fun `known rollback permits the same immutable bugok payload to commit on retry`() {
+        val world = world()
+        world.updateBugok(world.getBugokById(11)!!.copy(provisions = 601))
+        world.updateBugok(world.getBugokById(11)!!.copy(provisions = 602))
+        val p = payload(world)
+        assertEquals(3L, p.updatedBugoks.single().revision)
+        assertEquals(602, p.updatedBugoks.single().provisions)
+        val failure = assertFailsWith<IllegalStateException> {
+            tx.execute<Unit> {
+                executor.flush(p)
+                assertEquals(1L, version())
+                assertEquals(3L, jdbc.queryForObject("SELECT revision FROM general_bugok WHERE world_id=1 AND id=11", Long::class.java))
+                assertEquals(602, jdbc.queryForObject("SELECT provisions FROM general_bugok WHERE world_id=1 AND id=11", Int::class.java))
+                assertEquals(1, count())
+                error("injected failure after flush before commit")
+            }
+        }
+        assertEquals("injected failure after flush before commit", failure.message)
+        assertEquals(0L, version())
+        assertEquals(600, jdbc.queryForObject("SELECT provisions FROM general_bugok WHERE world_id=1 AND id=11", Int::class.java))
+        assertEquals(1L, jdbc.queryForObject("SELECT revision FROM general_bugok WHERE world_id=1 AND id=11", Long::class.java))
+        assertEquals(0, count())
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM campaign_battle_owner_authority", Int::class.java))
+
+        executor.flush(p)
+        assertEquals(1L, version())
+        assertEquals(602, jdbc.queryForObject("SELECT provisions FROM general_bugok WHERE world_id=1 AND id=11", Int::class.java))
+        assertEquals(3L, jdbc.queryForObject("SELECT revision FROM general_bugok WHERE world_id=1 AND id=11", Long::class.java))
+        assertEquals(1, count())
+        val current = read()
+        assertEquals(3L, current.origin.units.single { it.sourceKey.sourceId == "11" }.sourceRevision)
+        assertEquals(current.currentBugokRevisions, current.origin.units.associate { it.sourceKey.sourceId.toInt() to it.sourceRevision })
     }
     @Test fun `forces JSON tampering cannot be read as committed origin`() {
         executor.flush(payload())
