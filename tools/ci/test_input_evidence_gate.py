@@ -62,9 +62,19 @@ def without_rise_promotion(catalog):
 
 
 def without_declare_war_promotion(catalog):
-    """Keep historical temporary roots independent of the delivered declaration handler proof."""
+    """Keep historical roots independent of declaration handler proof."""
     row = next(item for item in catalog["inputs"] if item["inputId"] == "court.declareWar")
     row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
+def without_dissolve_promotion(catalog):
+    """Keep historical roots independent of dissolve handler proofs."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "action.dissolve")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationStepId"] = "N/A"
     row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
     row["evidence"] = {}
     return catalog
@@ -73,7 +83,8 @@ def without_declare_war_promotion(catalog):
 def historical_fixture_catalog(catalog):
     for reset in (without_resign_promotion, without_peace_promotion,
                   without_work_reduction_promotion, without_donation_promotion,
-                  without_rise_promotion, without_declare_war_promotion):
+                  without_rise_promotion, without_declare_war_promotion,
+                  without_dissolve_promotion):
         catalog = reset(catalog)
     return catalog
 
@@ -88,7 +99,7 @@ def reset_fixture_exclusion(root):
     path = root / "data/help/first-steps-exclusions-v1.json"
     document = json.loads(path.read_text())
     for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate",
-                     "action.rise", "court.declareWar"):
+                     "action.rise", "court.declareWar", "action.dissolve"):
         row = next(item for item in document["entries"] if item["inputId"] == input_id)
         row["reason"] = "INPUT_PLANNED"
     path.write_text(json.dumps(document))
@@ -259,6 +270,26 @@ class InputEvidenceGateTest(unittest.TestCase):
                                     "contract": UI_REQUEST_CONTRACTS[row["inputId"]],
                                     "paritySource": (ROOT / "web/game/e2e/support/parity.ts").read_text()})
         self.assertEqual(43, len(validate(actual, self.baseline, ROOT)))
+
+    def test_dissolve_handler_promotion_has_real_proofs_and_rejects_missing_sources(self):
+        actual = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in actual["inputs"] if item["inputId"] == "action.dissolve")
+        self.assertEqual("HANDLER_READY", row["deliveryState"])
+        self.assertEqual("UNMAPPED", row["firstStepsExplanationStepId"])
+        self.assertIsNone(row["firstStepsExplanationNaReason"])
+        for stage, role in (("DOMAIN_READY", "domain-rule"), ("HANDLER_READY", "handler-test")):
+            refs = row["evidence"][stage]
+            self.assertTrue(refs)
+            for reference in refs:
+                with self.subTest(reference=reference):
+                    self.assertEqual(role, _proof(row, stage, reference, ROOT))
+                    with self.assertRaisesRegex(ValueError, "evidence file missing"):
+                        _proof(row, stage, reference, self.root)
+        # PR merge checkouts can include separately delivered dispatch proofs.
+        # Compare exact debts to the checked-in ledger, not a historical count.
+        debt = json.loads((ROOT / "data/commands/input-evidence-debt-v1.json").read_text())
+        self.assertEqual(debt["count"], len(debt["entries"]))
+        self.assertEqual(debt["entries"], validate(actual, self.baseline, ROOT))
 
     def test_captive_handler_promotions_have_real_proofs(self):
         actual = json.loads((ROOT / CATALOG).read_text())

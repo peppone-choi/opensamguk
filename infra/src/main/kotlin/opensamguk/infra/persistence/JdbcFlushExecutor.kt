@@ -367,7 +367,7 @@ open class JdbcFlushExecutor(
                     payload.reservedGeneralTurnPulls.filterNot { it.generalId in deletedGeneralIds })
             }
             if (payload.generalTurnSlotWrites.isNotEmpty()) {
-                generalTurnSlotWriteMany(payload.worldId, payload.generalTurnSlotWrites)
+                generalTurnSlotWriteMany(payload.worldId, payload.generalTurnSlotWrites, payload.cancelledResultEnvelope)
             }
             if (payload.generalTurnClears.isNotEmpty()) {
                 generalTurnClearMany(payload.worldId, payload.generalTurnClears)
@@ -2890,8 +2890,49 @@ open class JdbcFlushExecutor(
         if (deleted > 0) lastOps.add(FlushExecOp("general_turn_clear", FlushVerb.DELETE_MANY, deleted))
     }
 
-    private fun generalTurnSlotWriteMany(worldId: WorldId, rows: List<GeneralTurnSlotWriteRow>) {
-        val params = rows.map {
+    private fun generalTurnSlotWriteMany(
+        worldId: WorldId,
+        rows: List<GeneralTurnSlotWriteRow>,
+        cancelledResultEnvelope: ((String, Int, Int, String) -> String)?,
+    ) {
+        // Lock and return the old request in the same transaction as the slot overwrite.
+        // Pulls precede this step, so already-settled slot zero requests are absent here.
+        val cancellations = rows.filter { it.cancelCode != null }
+        if (cancellations.isNotEmpty()) {
+            val envelopeOf = checkNotNull(cancelledResultEnvelope) { "cancelled slot writes require engine result factory" }
+            val version = checkNotNull(jdbc.queryForObject(
+                "SELECT world_version FROM world_state WHERE id = :world_id",
+                MapSqlParameterSource("world_id", worldId.value), Long::class.java))
+            val results = cancellations.flatMap { row ->
+                val params = MapSqlParameterSource()
+                    .addValue("world_id", worldId.value).addValue("general_id", row.generalId)
+                    .addValue("turn_idx", row.turnIdx).addValue("action_code", row.actionCode)
+                    .addValue("arg", row.argJson).addValue("brief", row.brief)
+                jdbc.query(
+                    """
+                    UPDATE general_turn AS slot
+                       SET action_code = :action_code, arg = CAST(:arg AS jsonb),
+                           brief = :brief, request_id = NULL
+                      FROM (SELECT world_id, general_id, turn_idx, request_id
+                              FROM general_turn
+                             WHERE world_id = :world_id AND general_id = :general_id
+                               AND turn_idx = :turn_idx FOR UPDATE) AS old
+                     WHERE slot.world_id = old.world_id AND slot.general_id = old.general_id
+                       AND slot.turn_idx = old.turn_idx
+                    RETURNING old.request_id
+                    """.trimIndent(), params,
+                ) { rs, _ -> rs.getString("request_id") }.filterNotNull().map { requestId ->
+                    CommandResultRow(requestId = requestId, resultSeq = 2,
+                        eventId = "command-result:${worldId.value}:$requestId:2",
+                        resultType = "executionRejected", ok = false, committedWorldVersion = version,
+                        payloadSchemaVersion = 1,
+                        envelopeJson = envelopeOf(requestId, row.generalId, row.turnIdx, checkNotNull(row.cancelCode)),
+                        sentAt = Instant.now(), terminalizeInbox = false)
+                }
+            }
+            if (results.isNotEmpty()) commandResultUpsertMany(worldId, results)
+        }
+        val params = rows.filter { it.cancelCode == null }.map {
             MapSqlParameterSource()
                 .addValue("world_id", worldId.value)
                 .addValue("general_id", it.generalId)
@@ -2900,7 +2941,7 @@ open class JdbcFlushExecutor(
                 .addValue("arg", it.argJson)
                 .addValue("brief", it.brief)
         }.toTypedArray()
-        jdbc.batchUpdate(
+        if (params.isNotEmpty()) jdbc.batchUpdate(
             """
             UPDATE general_turn
                SET action_code = :action_code,
@@ -3034,6 +3075,8 @@ data class FlushPayload(
     val reservedGeneralTurnPulls: List<GeneralTurnPullRow> = emptyList(),
     val generalTurnSlotWrites: List<GeneralTurnSlotWriteRow> = emptyList(),
     val generalTurnClears: List<Int> = emptyList(),
+    /** Engine-owned wire serialization; evaluated only for overwritten persisted request ids. */
+    val cancelledResultEnvelope: ((String, Int, Int, String) -> String)? = null,
     val reservedNationTurnPulls: List<NationTurnPullRow> = emptyList(),
     val commandResults: List<CommandResultRow> = emptyList(),
     // --- OPENSAM-150 (R1) v2 도시 원장 채널 ---
@@ -3082,6 +3125,7 @@ data class GeneralTurnSlotWriteRow(
     val actionCode: String,
     val argJson: String,
     val brief: String,
+    val cancelCode: String? = null,
 )
 
 data class NationTurnPullRow(

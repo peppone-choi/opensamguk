@@ -67,6 +67,51 @@ class JdbcFlushExecutorIT {
     private lateinit var executor: JdbcFlushExecutor
 
     @Test
+    fun `cancelled future slots write terminal results and outbox once while ordinary writes do not`() {
+        val reservations = ReservedTurnRepository(jdbc)
+        val ids = listOf("dissolve-slot3", "dissolve-slot7")
+        val original = jdbc.queryForMap(
+            "SELECT meta::text AS meta, current_year, current_month, current_phase, isunited, updated_at " +
+                "FROM world_state WHERE id = 1", MapSqlParameterSource())
+        try {
+            reservations.reserve(WorldId(1), 10, 3, "action.move", "{}", requestId = ids[0])
+            reservations.reserve(WorldId(1), 10, 7, "action.move", "{}", requestId = ids[1])
+            val payload = testFlushPayload(worldId = WorldId(1), worldStateUpdate = linkedMapOf(
+                "id" to 1, "current_year" to original["current_year"], "current_month" to original["current_month"],
+                "current_phase" to original["current_phase"], "isunited" to original["isunited"],
+            )).copy(
+                generalTurnSlotWrites = listOf(3, 7).map {
+                    GeneralTurnSlotWriteRow(10, it, "휴식", "{}", "cancelled", "RESERVATION_CANCELLED")
+                },
+                cancelledResultEnvelope = { requestId, generalId, turnIdx, code ->
+                    """{"requestId":"$requestId","event":{"result":{"type":"executionRejected","ok":false,"generalId":$generalId,"turnIdx":$turnIdx,"code":"$code"}}}"""
+                },
+            )
+            repeat(2) { executor.flush(payload) }
+            // Reintroducing an already-terminal request must also hit ON CONFLICT, not duplicate it.
+            reservations.reserve(WorldId(1), 10, 3, "action.move", "{}", requestId = ids[0])
+            executor.flush(payload)
+            for (requestId in ids) {
+                val params = MapSqlParameterSource("request_id", requestId)
+                assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=1 AND request_id=:request_id AND result_seq=2 AND terminal_status='REJECTED' AND result_type='executionRejected' AND result_payload #>> '{event,result,code}'='RESERVATION_CANCELLED'", params, Int::class.java))
+                assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM command_outbox WHERE world_id=1 AND request_id=:request_id", params, Int::class.java))
+            }
+            for (slot in listOf(3, 7)) assertNull(reservations.readReserved(WorldId(1), 10, slot).requestId)
+            reservations.reserve(WorldId(1), 10, 3, "action.move", "{}", requestId = "ordinary-slot")
+            executor.flush(payload.copy(generalTurnSlotWrites = listOf(GeneralTurnSlotWriteRow(10, 3, "휴식", "{}", "ordinary")), cancelledResultEnvelope = null))
+            assertNull(reservations.readReserved(WorldId(1), 10, 3).requestId)
+            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=1 AND request_id='ordinary-slot'", MapSqlParameterSource(), Int::class.java))
+        } finally {
+            jdbc.update("DELETE FROM command_outbox WHERE world_id=1 AND request_id IN ('dissolve-slot3','dissolve-slot7')", MapSqlParameterSource())
+            jdbc.update("DELETE FROM command_result WHERE world_id=1 AND request_id IN ('dissolve-slot3','dissolve-slot7')", MapSqlParameterSource())
+            jdbc.update("DELETE FROM general_turn WHERE world_id=1 AND general_id=10 AND turn_idx IN (3,7)", MapSqlParameterSource())
+            jdbc.update("UPDATE world_state SET meta=CAST(:meta AS jsonb), current_year=:current_year, " +
+                        "current_month=:current_month, current_phase=:current_phase, isunited=:isunited, " +
+                        "updated_at=:updated_at WHERE id=1", MapSqlParameterSource(original))
+        }
+    }
+
+    @Test
     fun `successful world tick wall time is atomic and intake flush cannot refresh it`() {
         val original = jdbc.queryForMap(
             "SELECT meta::text AS meta, current_year, current_month, current_phase, isunited FROM world_state WHERE id = 1",

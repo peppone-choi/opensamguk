@@ -40,6 +40,7 @@ class InputRegistryTest {
         "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
         "action.foundState" to InputHandler {}, "action.abdicate" to InputHandler {}, "action.oath" to InputHandler {},
         "action.resign" to InputHandler {}, "action.rise" to InputHandler {},
+        PoliticalInput.DISSOLVE to InputHandler {},
         "action.gift" to InputHandler {}, "action.donate" to InputHandler {},
         "action.convertProficiency" to InputHandler {}, "action.tradeEquipment" to InputHandler {},
         "action.tradeGrain" to InputHandler {}, "action.transport" to InputHandler {},
@@ -210,11 +211,14 @@ class InputRegistryTest {
     fun `political actions expose only delivered handlers`() {
         for (id in PoliticalRules.SUPPORTED_IDS) {
             val failures = PoliticalFailure.entries.map { it.name }.toSet().let {
-                if (id == PoliticalInput.RISE) it - PoliticalFailure.INSUFFICIENT_RENOWN.name else it }
+                if (id == PoliticalInput.RISE) it - PoliticalFailure.INSUFFICIENT_RENOWN.name else it
+            }.let {
+                if (id != PoliticalInput.DISSOLVE) it - PoliticalFailure.INITIAL_MONTH.name else it
+            }
             assertEquals(failures,
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            if (id == PoliticalInput.RISE) {
+            if (id in setOf(PoliticalInput.RISE, PoliticalInput.DISSOLVE)) {
                 assertEquals(InputDeliveryState.HANDLER_READY, catalog[id]!!.deliveryState)
                 assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
                 assertFailsWith<IllegalArgumentException> { InputRegistry(catalog, handlers(InputHandler { }) - id) }

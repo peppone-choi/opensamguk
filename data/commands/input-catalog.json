@@ -2576,6 +2576,7 @@
       },
       "effectScope": "ACTOR_LOCATION",
       "failureReasons": [
+        "INITIAL_MONTH",
         "WRONG_RULE_PROFILE",
         "INVALID_INPUT",
         "ACTOR_NOT_FOUND",
@@ -2611,11 +2612,14 @@
       },
       "aiPolicyId": "ai.action.dissolve",
       "helpTopicId": "commands.action.dissolve",
-      "firstStepsExplanationStepId": "N/A",
-      "firstStepsExplanationNaReason": "INPUT_PLANNED",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
       "displayName": "세력 해산",
-      "deliveryState": "PLANNED",
-      "evidence": {}
+      "deliveryState": "HANDLER_READY",
+      "evidence": {
+        "DOMAIN_READY": ["domain-rule:logic/src/main/kotlin/opensamguk/logic/input/PoliticalRules.kt#action.dissolve"],
+        "HANDLER_READY": ["handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/PoliticalHandlerTest.kt#action.dissolve"]
+      }
     },
     {
       "inputId": "action.tour",

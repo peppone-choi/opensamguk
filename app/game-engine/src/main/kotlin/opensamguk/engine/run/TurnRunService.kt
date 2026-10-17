@@ -775,7 +775,21 @@ open class TurnRunService(
 
     private fun buildFlushPayload(): FlushPayload {
         val dirty = world.consumeDirtyState()
-        return DatabaseHooks.toFlushPayload(world, handler.recorder, dirty)
+        val version = world.getState().worldVersion + 1
+        return DatabaseHooks.toFlushPayload(world, handler.recorder, dirty).copy(
+            cancelledResultEnvelope = { requestId, generalId, turnIdx, code ->
+                val envelope = TurnDaemonEventEnvelope(
+                    requestId = requestId, sentAt = Instant.now().toString(),
+                    event = TurnDaemonEvent.CommandResult(CommandLifecycleResult(
+                        type = "executionRejected", ok = false,
+                        commandKind = CommandInboxRepository.CommandKind.RESERVED_TURN.name,
+                        generalId = generalId, turnIdx = turnIdx, code = code,
+                        reason = "세력 해산으로 예약이 취소되었습니다.")),
+                    committedWorldVersion = version,
+                )
+                WireJson.encodeToString(TurnDaemonEventEnvelope.serializer(), envelope)
+            },
+        )
     }
 
     private fun List<Pair<String, TurnDaemonCommandResult>>.toCommandResultRows(
