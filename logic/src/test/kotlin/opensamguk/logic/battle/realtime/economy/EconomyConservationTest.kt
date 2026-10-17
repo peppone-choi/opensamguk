@@ -17,8 +17,9 @@ internal fun conservation(ledger: EconomyLedger) {
     for (kind in ResourceKind.entries) {
         val nodes = s.nodes.values.filter { it.resource == kind }
         val initial = nodes.sumOf { it.initial }; val remaining = nodes.sumOf { it.remaining }
-        assertTrue(initial >= remaining && remaining >= 0, "finite nodes never regenerate")
-        // ResourceKind and bundle order deliberately differ for iron/timber: use a one-unit vector.
+        assertTrue(initial >= remaining && remaining >= 0, "finite cycle balance never becomes negative")
+        // Select the component using its one-unit vector, independent of enum order.
+        nodes.forEach { assertEquals(it.initial, Math.addExact(it.produced, it.remaining), "cycle yield conservation") }
         val component = kind.bundle(1).values().indexOf(1)
         assertEquals(initial - remaining, (actual + s.spent + s.lost + s.escaped).values()[component] -
             s.imported.values()[component] - remaining, "node extraction conservation")
@@ -41,7 +42,7 @@ internal fun conservation(ledger: EconomyLedger) {
 class EconomyConservationTest {
     private fun initial() = seed(500, 500).housing().housing("B", "hb").worker().worker("B", "bw")
         .transport().transport("A", "route-cart").registerNode("n", "mine", NodeKind.DEPOSIT, ResourceKind.STONE, 100, ready).ok()
-        .registerNode("f", "farm", NodeKind.FARM, ResourceKind.GRAIN, 100, ready).ok()
+        .registerNode("f", "farm", NodeKind.FARM, ResourceKind.GRAIN, null, farmReady.copy(farmYield = 100), owner = "A").ok()
         .assignFarm("assign", "A", "farm", setOf("worker"), ready).ok()
         .acquireReserve("reserve", "A", "popA", "reserve-debit", ready).ok()
         .createRoute("route", "A", "r", "route-cart", "a", "aa", EconomyMode.REALTIME, ready).ok()
@@ -101,5 +102,34 @@ class EconomyConservationTest {
         val b = base.advanceProduction("p", "o", true, ready).ok().cancelProduction("c", "A", "o", EconomyMode.REALTIME, ready).ok()
         assertEquals(a.stock("A"), b.stock("A")); assertEquals(a.reserve("A"), b.reserve("A")); assertEquals(a.source("popA"), b.source("popA"))
         conservation(a); conservation(b)
+    }
+
+    private fun cycles(seed: Int): EconomyLedger {
+        val random = Random(seed)
+        val params = farmReady.copy(farmYield = 7, farmReseedTimber = 3, farmTicks = 1)
+        var s = EconomyLedger(listOf(EconomyStore("a", "A", ResourceBundle(timber = 100))))
+            .worker().registerNode("f", "f", NodeKind.FARM, ResourceKind.GRAIN, null, params, owner = "A").ok()
+            .assignFarm("a", "A", "f", setOf("worker"), params).ok()
+        var reseeds = 0L; var harvested = 0L
+        repeat(250) { i ->
+            val before = s
+            val result = if (random.nextBoolean()) s.gather("g$i", "A", "f", "worker", params)
+                else s.reseedFarm("r$i", "A", "f", "a", params)
+            s = result.ledger
+            if (result.code == EconomyCode.APPLIED) {
+                if (s.node("f")!!.cycle != before.node("f")!!.cycle) reseeds++
+                harvested += s.cargo("worker")!!.cargo.grain - before.cargo("worker")!!.cargo.grain
+            } else assertSame(before, s)
+            assertEquals(reseeds + 1, s.node("f")!!.cycle)
+            assertEquals(reseeds * 3, s.state.spent.timber)
+            assertEquals(harvested, s.node("f")!!.produced)
+            assertEquals((reseeds + 1) * 7, harvested + s.node("f")!!.remaining)
+            conservation(s)
+        }
+        assertTrue(reseeds > 0)
+        return s
+    }
+    @Test fun `random finite farm cycles preserve four balances and deterministic hashes`() {
+        repeat(20) { assertEquals(cycles(it).sha256(), cycles(it).sha256()) }
     }
 }

@@ -9,6 +9,8 @@ data class EconomyParams(
     val gatherAmount: Long? = null,
     val farmWorkers: Long? = null,
     val farmTicks: Long? = null,
+    val farmYield: Long? = null,
+    val farmReseedTimber: Long? = null,
     val collectionKinds: Set<String>? = null,
     val collectionRadius: Long? = null,
     val depositTicks: Long? = null,
@@ -26,7 +28,7 @@ data class EconomyParams(
     val routeLegTicks: Long? = null,
 )
 
-internal fun EconomyParams.fingerprint(): String = key(status, carrierCapacity, gatherAmount, farmWorkers, farmTicks,
+internal fun EconomyParams.fingerprint(): String = key(status, carrierCapacity, gatherAmount, farmWorkers, farmTicks, farmYield, farmReseedTimber,
     collectionKinds?.sorted(), collectionRadius, depositTicks, dropRetainedNumerator, dropRetainedDenominator,
     transferEnabled, reserveAcquisitionEnabled, reserveBatchSize, housingPerBuilding, reserveHousingDuringProduction,
     productionTurnCost, cancelTurnCost, routeTurnCost, routeAmount, routeLegTicks)

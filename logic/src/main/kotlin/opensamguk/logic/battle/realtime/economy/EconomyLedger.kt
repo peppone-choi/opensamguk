@@ -30,7 +30,7 @@ data class ResourceBundle(
 enum class EconomyCode {
     APPLIED, ALREADY_APPLIED, NOT_DECIDED, INVALID_INPUT, NOT_FOUND, DUPLICATE_ID,
     COMMAND_CONFLICT, NOT_OWNER, OWNER_CHANGED, INSUFFICIENT_STOCK, INSUFFICIENT_RESERVE,
-    INSUFFICIENT_POPULATION, INSUFFICIENT_HOUSING, NODE_DEPLETED, WORKERS_REQUIRED,
+    INSUFFICIENT_POPULATION, INSUFFICIENT_HOUSING, NODE_DEPLETED, NOT_DEPLETED, WORKERS_REQUIRED,
     CARRIER_NOT_ALLOWED, CAPACITY_EXCEEDED, NOT_AT_DESTINATION, ALREADY_COMPLETED,
     ALREADY_CANCELLED, QUEUE_BLOCKED, ROUTE_BUSY, ROUTE_STOPPED,
 }
@@ -101,7 +101,7 @@ class EconomyLedger internal constructor(internal val state: EconomyState) {
     fun store(id: String): EconomyStore? = state.stores[id]
     fun stock(owner: String): ResourceBundle = state.stores.values.filter { it.owner == owner }
         .fold(ResourceBundle.ZERO) { a, b -> a + b.stock }
-    fun node(id: String): ResourceNode? = state.nodes[id]?.let { it.copy(workers = it.workers.toSet()) }
+    fun node(id: String): ResourceNode? = state.nodes[id]?.let { it.copy(workers = it.workers.toSet(), reseedDebits = it.reseedDebits.toList()) }
     fun cargo(id: String): CargoCarrier? = state.carriers[id]
     fun ground(id: String): GroundCargo? = state.ground[id]
     fun order(id: String): ProductionOrder? = state.orders[id]?.let { it.copy(debits = it.debits.toList(), completedPeople = it.completedPeople.toList()) }
@@ -140,7 +140,7 @@ class EconomyLedger internal constructor(internal val state: EconomyState) {
             append(key(name)); values.toSortedMap().forEach { (id, value) -> append(key(id, value)) }
         }
         rows("stores", state.stores); rows("population", state.population)
-        rows("nodes", state.nodes.mapValues { (_, n) -> key(n.id, n.kind, n.resource, n.initial, n.remaining, n.workers.sorted(), n.progress) })
+        rows("nodes", state.nodes.mapValues { (_, n) -> key(n.id, n.kind, n.resource, n.initial, n.remaining, n.workers.sorted(), n.progress, n.owner, n.cycle, n.produced, n.reseedDebits) })
         rows("carriers", state.carriers); rows("ground", state.ground)
         rows("buildings", state.buildings); rows("units", state.units)
         rows("reserves", state.reserves); rows("orders", state.orders)
