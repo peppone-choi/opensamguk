@@ -9,7 +9,9 @@ from typing import Any
 
 ENDPOINTS = ("origin", "gateway", "game_api")
 SCHEDULE_SECONDS = 300
-MISSED_SCHEDULE_SECONDS = SCHEDULE_SECONDS * 3
+# GitHub cron can be delayed. Missing-peer detection now has a 60-minute upper bound.
+# Do not exempt indefinitely queued/in_progress runs: that would hide monitor outages.
+MISSED_SCHEDULE_SECONDS = SCHEDULE_SECONDS * 12
 MAX_BODY_BYTES = 65536
 MAX_HEALTHY_TURN_AGE_SECONDS = 25 * 60 * 60
 
