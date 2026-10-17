@@ -29,12 +29,18 @@ class InheritanceTest {
     }
 
     @Test
-    fun `family order must be explicit and takes precedence over treasury`() {
+    fun `family order alone cannot decide distribution or fall through to treasury`() {
         val frozen = estate().plan(InheritancePolicy(personal, treasuryId = "capital"))
         assertEquals(InheritanceStatus.NOT_DECIDED, frozen.status)
         assertTrue(frozen.pending.values.all { it == InheritancePending.FAMILY_PRIORITY })
-        val result = frozen.state.plan(InheritancePolicy(personal, familyPriority = listOf(7, 6)))
-        assertEquals(assets.associate { it.id to InheritanceDestination.Heir(7) }, result.state.destinations)
+        for (family in listOf(listOf(7L, 6L), listOf(6L, 7L), listOf(7L))) {
+            val result = frozen.state.plan(InheritancePolicy(personal, familyPriority = family, treasuryId = "capital"))
+            assertEquals(InheritanceStatus.NOT_DECIDED, result.status)
+            assertSame(frozen.state, result.state)
+            assertEquals(assets, result.state.frozenAssets)
+            assertTrue(result.state.destinations.isEmpty())
+            assertEquals(assets.associate { it.id to InheritancePending.FAMILY_DISTRIBUTION }, result.pending)
+        }
     }
 
     @Test
@@ -60,12 +66,28 @@ class InheritanceTest {
     }
 
     @Test
-    fun `unaffiliated estate still prefers designated heir then family over local remainder`() {
+    fun `unaffiliated estate prefers designated heir but undecided family cannot become local remainder`() {
         val independent = estate(case.copy(nationId = null))
-        for (policy in listOf(InheritancePolicy(personal, designatedHeirId = 5),
-            InheritancePolicy(personal, familyPriority = listOf(5)))) {
-            assertTrue(independent.plan(policy).state.destinations.values.all { it == InheritanceDestination.Heir(5) })
-        }
+        val designated = independent.plan(InheritancePolicy(personal, designatedHeirId = 5))
+        assertEquals(InheritanceStatus.PLANNED, designated.status)
+        assertEquals(assets.associate { it.id to InheritanceDestination.Heir(5) }, designated.state.destinations)
+        val family = independent.plan(InheritancePolicy(personal, familyPriority = listOf(5)))
+        assertEquals(InheritanceStatus.NOT_DECIDED, family.status)
+        assertSame(independent, family.state)
+        assertTrue(family.state.destinations.isEmpty())
+    }
+
+    @Test
+    fun `undecided family distribution leaves even a mixed estate unchanged`() {
+        val state = estate()
+        val ownership = personal + mapOf("unit" to EstateOwnership.FACTION)
+        val result = state.plan(InheritancePolicy(ownership, familyPriority = listOf(7, 6)))
+        assertEquals(InheritanceStatus.NOT_DECIDED, result.status)
+        assertSame(state, result.state)
+        assertEquals(assets, result.state.frozenAssets)
+        assertTrue(result.state.destinations.isEmpty())
+        assertEquals(setOf("gold", "building"), result.pending.keys)
+        assertTrue(result.pending.values.all { it == InheritancePending.FAMILY_DISTRIBUTION })
     }
 
     @Test
@@ -86,14 +108,41 @@ class InheritanceTest {
         val first = estate().plan(InheritancePolicy(mapOf("gold" to EstateOwnership.PERSONAL), 5))
         assertEquals(InheritanceStatus.NOT_DECIDED, first.status)
         assertEquals(listOf(assets[1], assets[2]), first.state.frozenAssets)
-        val next = first.state.plan(InheritancePolicy(personal, 6))
-        assertEquals(InheritanceDestination.Heir(5), next.state.destinations["gold"])
-        assertEquals(InheritanceDestination.Heir(6), next.state.destinations["unit"])
+        for (changed in listOf(
+            InheritancePolicy(personal, 6),
+            InheritancePolicy(personal, familyPriority = emptyList(), treasuryId = "capital"),
+            InheritancePolicy(personal, 5, listOf(6)),
+            InheritancePolicy(personal, 5, treasuryId = "capital"),
+        )) {
+            val blocked = first.state.plan(changed)
+            assertEquals(InheritanceStatus.NOT_DECIDED, blocked.status)
+            assertSame(first.state, blocked.state)
+            assertEquals(mapOf("gold" to InheritanceDestination.Heir(5)), blocked.state.destinations)
+            assertEquals(listOf(assets[1], assets[2]), blocked.state.frozenAssets)
+            assertEquals(mapOf("unit" to InheritancePending.POLICY_CHANGE,
+                "building" to InheritancePending.POLICY_CHANGE), blocked.pending)
+        }
+        val next = first.state.plan(InheritancePolicy(personal, 5))
+        assertEquals(assets.associate { it.id to InheritanceDestination.Heir(5) }, next.state.destinations)
         assertEquals(InheritanceStatus.PLANNED, next.status)
         val retry = next.state.plan()
         assertEquals(InheritanceStatus.ALREADY_COMPLETED, retry.status)
         assertSame(next.state, retry.state)
         assertEquals(assets.size, retry.state.destinations.size)
+    }
+
+    @Test
+    fun `partial personal policy snapshots cannot be changed through mutable family input`() {
+        val family = mutableListOf(6L, 7L)
+        val policy = InheritancePolicy(mapOf("gold" to EstateOwnership.PERSONAL), 5, family)
+        val first = estate().plan(policy)
+        family.reverse()
+        val blocked = first.state.plan(policy.copy(ownershipByAsset = personal))
+        assertEquals(InheritanceStatus.NOT_DECIDED, blocked.status)
+        assertSame(first.state, blocked.state)
+        val next = first.state.plan(InheritancePolicy(personal, 5, listOf(6, 7)))
+        assertEquals(InheritanceStatus.PLANNED, next.status)
+        assertEquals(assets.associate { it.id to InheritanceDestination.Heir(5) }, next.state.destinations)
     }
 
     @Test
