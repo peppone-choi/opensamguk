@@ -260,7 +260,10 @@ CLEANUP_FAILED를 유지한다. `/proc` 디렉터리 소유자(비 dumpable 프�
 바뀔 수 있음)나 GID 차이만으로 소유 자식을 제외하지 않는다. 종료 직전에는 pidfd로
 커널 identity를 고정하고 UID·tick·nonce를 재확인하며, 재사용 PID·원래 group의 타 nonce·
 진행 중 operation이면 거절한다. 전역 `/proc` 가림, sudo/root 종료, 시스템 프로세스
-일괄 종료는 사용하지 않는다.
+일괄 종료는 사용하지 않는다. 종료 도중 환경 읽기가 PermissionError로 막히면
+같은 시작 tick의 프로세스만 최대 5회·회당 10ms 기다려 다시 확인한다. 실제로 사라졌거나
+같은 tick의 좀비(Z)가 된 경우에만 종료로 인정하며, 계속 살아 있거나 tick이 달라지거나
+신원을 확인할 수 없으면 CLEANUP_FAILED로 남기고 custody를 보존한다.
 project+nonce 검증 뒤 그 project만 `down --volumes --remove-orphans`하고 정확한
 컨테이너/network/명시 volume 부재와 private custody 삭제를 확인한다. 전역 prune은 없다.
 정리 실패는 CLEANUP_FAILED이며 QA 전체 PASS가 될 수 없다. 강제 VM 폐기는 cleanup PASS가 아니다.
