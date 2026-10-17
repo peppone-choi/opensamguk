@@ -129,12 +129,13 @@ class RetainerFlushIT {
                 worldId = worldId, worldStateUpdate = ws(mapOf("max_retainer_id" to 3, "max_bugok_id" to 1)),
                 deletedRetainerIds = listOf(1),
                 createdRetainers = listOf(retainer(3, name = "홍길동")),
-                updatedBugoks = listOf(bugok(1, commander = 3, morale = 56)),
+                updatedBugoks = listOf(bugok(1, commander = 3, morale = 56).copy(revision = 2)),
             ),
         )
         assertEquals(2, count("general_retainers"))
         assertEquals(3, jdbc.queryForObject("SELECT commander_retainer_id FROM general_bugok WHERE world_id = 1 AND id = 1", MapSqlParameterSource(), Int::class.java))
         assertEquals(56, jdbc.queryForObject("SELECT morale FROM general_bugok WHERE world_id = 1 AND id = 1", MapSqlParameterSource(), Int::class.java))
+        assertEquals(2L, jdbc.queryForObject("SELECT revision FROM general_bugok WHERE world_id = 1 AND id = 1", MapSqlParameterSource(), Long::class.java))
 
         // 3) 지휘 부장(3) DELETE 만 — DB SET NULL (commander_retainer_id): world_id 보존, commander NULL, 행 유지
         executor.flush(FlushPayload(worldId = worldId, worldStateUpdate = ws(), deletedRetainerIds = listOf(3)))
