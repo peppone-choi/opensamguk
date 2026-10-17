@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
@@ -24,10 +24,11 @@ import { useCampaignRead } from '@/lib/campaign-reads';
 import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
-import { useTurnSlots } from '@/lib/turn-slots';
+import { CurrentTurnSlotsOnly, useTurnSlots } from '@/lib/turn-slots';
 import { useSupplyLines } from '@/lib/use-supply-lines';
 import { parseWarRoomMapView } from '@/lib/war-room-map-view';
 import type { WarRoomPickTarget } from '@/lib/war-room-pick';
+import { useReadRevision, warRoomReadScopeKey } from '@/lib/war-room-read-scope';
 import styles from './WarRoomPage.module.css';
 
 /** 모바일 12순 엿보기 시트 높이(보드 V31K4MWarRoom peek 124) — 그 위에 선택 알약(48)이 선다. 지도 보기 단추 · 내 위치 화살표가 이 위로 비킨다. */
@@ -159,27 +160,42 @@ export default function WarRoomPage() {
         : failedLayers.length === 1 ? failedLayers[0].text
         : `${withParticle(failedLayers.map((f) => f.name).join(' · '), '을/를')} 못 불러왔습니다`;
 
-    const destinationScope = JSON.stringify([serverId, generalId, refreshKey, flow.query.inputId]);
-    const [destinationPick, setDestinationPick] = useState<{ scope: string; field: ArgField; commit: (value: string) => void } | null>(null);
+    // 순 · 세대가 바뀌면(셸의 턴 신호가 front-info 를 다시 읽는다) 열린 흐름의 선택지와 목적지 지도도 새로 읽는다.
+    // 두 번호 모두 올라가기만 하니 합도 되돌아가지 않는다 — 흐름은 숫자 refreshKey 하나로 옵션을 다시 읽고 초안을 재검증한다.
+    const flowRefreshKey = refreshKey + useReadRevision(warRoomReadScopeKey(serverId, generalId, frontInfo));
+    const destinationScope = JSON.stringify([serverId, generalId, flowRefreshKey, flow.query.inputId]);
+    // 연 지도 하나 = 고르기 하나(no). 닫고 다시 열면(같은 범위여도) 새 고르기다.
+    const [destinationPick, setDestinationPick] = useState<{ no: number; scope: string; field: ArgField; commit: (value: string) => void } | null>(null);
+    const pickNo = useRef(0);
+    // 지금 범위 · 지금 고르기 — 옛 범위나 이미 닫힌 지도에서 잡아 둔 확인 처리(늦게 불린 onConfirm)는 초안에 쓰지 않는다.
+    const liveDestinationScope = useRef(destinationScope);
+    useLayoutEffect(() => { liveDestinationScope.current = destinationScope; }, [destinationScope]);
+    const liveDestinationPick = useRef(destinationPick);
+    useLayoutEffect(() => { liveDestinationPick.current = destinationPick; }, [destinationPick]);
+    // 닫기는 그 지도의 고르기만 닫는다 — 늦게 불린 옛 지도의 확인 · 닫기가 지금 열린 지도를 닫지 않는다.
+    const closeDestinationPick = (no: number) => setDestinationPick(current => current?.no === no ? null : current);
     const flowOpen = hasGeneral && flow.query.open;
     useEffect(() => {
         setDestinationPick(current => current && (!flowOpen || current.scope !== destinationScope) ? null : current);
     }, [flowOpen, destinationScope]);
     const flowPanel = flowOpen && frontInfo && generalId != null ? (
         <CommandFlowHost>
-            <CommandFlow
-                generalId={generalId}
-                generalName={frontInfo.general.name}
-                initialInputId={flow.query.inputId}
-                initialSlot={flow.query.slot}
-                initialTarget={flow.query.target}
-                refreshKey={refreshKey}
-                generation={frontInfo.global.generation ?? null}
-                onClose={flow.closeFlow}
-                onLocationChange={flow.syncFlow}
-                onReserved={bump}
-                onMapPick={(field, commit) => setDestinationPick({ scope: destinationScope, field, commit })}
-            />
+            {/* 예약 · 덮어쓰기 확인은 지금 순 · 세대(flowRefreshKey)로 다시 읽은 12순만 검증된 것으로 본다 — 그 전에는 「불러오는 중」. */}
+            <CurrentTurnSlotsOnly.Provider value>
+                <CommandFlow
+                    generalId={generalId}
+                    generalName={frontInfo.general.name}
+                    initialInputId={flow.query.inputId}
+                    initialSlot={flow.query.slot}
+                    initialTarget={flow.query.target}
+                    refreshKey={flowRefreshKey}
+                    generation={frontInfo.global.generation ?? null}
+                    onClose={flow.closeFlow}
+                    onLocationChange={flow.syncFlow}
+                    onReserved={bump}
+                    onMapPick={(field, commit) => setDestinationPick({ no: ++pickNo.current, scope: destinationScope, field, commit })}
+                />
+            </CurrentTurnSlotsOnly.Provider>
         </CommandFlowHost>
     ) : null;
     const turnsProps = {
@@ -310,9 +326,12 @@ export default function WarRoomPage() {
                     : <div className={styles.turns}>{noGeneral}</div>}
             </div>
             {flowOpen && destinationPick?.scope === destinationScope ? <CommandDestinationMap
-                key={destinationScope} field={destinationPick.field} refreshKey={refreshKey}
-                onClose={() => setDestinationPick(null)}
-                onConfirm={value => { destinationPick.commit(value); setDestinationPick(null); }} /> : null}
+                key={destinationPick.no} field={destinationPick.field} refreshKey={flowRefreshKey}
+                onClose={() => closeDestinationPick(destinationPick.no)}
+                onConfirm={value => {
+                    if (liveDestinationPick.current === destinationPick && destinationPick.scope === liveDestinationScope.current) destinationPick.commit(value);
+                    closeDestinationPick(destinationPick.no);
+                }} /> : null}
             <Toast toasts={toasts} onRemove={remove} />
         </GameShell>
     );
