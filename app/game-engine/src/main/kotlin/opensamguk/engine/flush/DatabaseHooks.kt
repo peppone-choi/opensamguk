@@ -827,6 +827,7 @@ object DatabaseHooks {
                 GeneralTurnPullRow(it.generalId, it.turnCnt, it.expectedReservation)
             },
             generalTurnSlotWrites = recorder.generalTurnSlotWrites(),
+            generalTurnClears = recorder.generalTurnClears().toList(),
             reservedNationTurnPulls = recorder.reservedNationTurnPulls().map {
                 NationTurnPullRow(it.nationId, it.officerLevel, it.turnCnt)
             },

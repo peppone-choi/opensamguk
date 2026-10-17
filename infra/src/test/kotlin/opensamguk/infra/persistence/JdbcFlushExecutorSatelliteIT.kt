@@ -17,6 +17,9 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
+import opensamguk.common.world.WorldId
 
 /**
  * FF2 — Testcontainers IT for the [JdbcFlushExecutor] satellite write-set (rank_data step-8,
@@ -258,6 +261,85 @@ class JdbcFlushExecutorSatelliteIT {
             ),
             "delete-on-null removed the pre-seeded stale_key row",
         )
+    }
+
+    private fun seedQueueWorld(id: Int, campaign: Boolean = true) {
+        val params = mapOf("world" to id, "config" to if (campaign) "{\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}" else "{}")
+        jdbc.update("""INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config)
+            VALUES (:world,'synthetic-retire-clear',200,1,3600,CAST(:config AS jsonb))""", params)
+        for (actor in listOf(10, 11, 12)) {
+            val p = params + mapOf("actor" to actor, "owner" to actor + 100, "name" to "synthetic-$actor")
+            jdbc.update("""INSERT INTO general(world_id,id,name,npc_state,turn_time,last_turn,meta)
+                VALUES (:world,:actor,:name,5,now(),'{}'::jsonb,'{"retired":true}'::jsonb)""", p)
+            jdbc.update("INSERT INTO general_owner(world_id,general_id,user_id) VALUES (:world,:actor,:owner)", p)
+            for (slot in 0 until if (campaign) 12 else 30) jdbc.update("""INSERT INTO general_turn
+                (world_id,general_id,turn_idx,action_code,arg,request_id)
+                VALUES (:world,:actor,:slot,'action.personal.train','{}'::jsonb,:request)""",
+                p + mapOf("slot" to slot, "request" to "synthetic-$id-$actor-$slot"))
+        }
+        val receipt = params + mapOf("request" to "synthetic-cancel-$id", "event" to "synthetic-cancel-event-$id")
+        jdbc.update("""INSERT INTO command_inbox(world_id,request_id,payload_schema_version,command_kind,status,
+            intent_fingerprint,general_id,turn_idx,action_code,payload,owner_user_id)
+            VALUES (:world,:request,1,'QUEUE_MUTATION','APPLIED','synthetic',10,0,'cancelReservedTurn','{}'::jsonb,110)""", receipt)
+        jdbc.update("""INSERT INTO command_result(world_id,request_id,result_seq,terminal_status,result_type,ok,
+            committed_world_version,payload_schema_version,result_payload,sent_at)
+            VALUES (:world,:request,1,'APPLIED','reservationCancelled',true,0,1,'{}'::jsonb,now())""", receipt)
+        jdbc.update("""INSERT INTO command_outbox(world_id,event_id,request_id,event_type,payload_schema_version,payload)
+            VALUES (:world,:event,:request,'commandResult',1,'{}'::jsonb)""", receipt)
+    }
+
+    private fun queueRows(worlds: List<Int>) = jdbc.queryForList(
+        "SELECT * FROM general_turn WHERE world_id IN (:worlds) ORDER BY world_id,general_id,turn_idx", mapOf("worlds" to worlds))
+
+    private fun queuePayload(id: Int) = testFlushPayload(WorldId(id),
+        mapOf("id" to id, "current_year" to 200, "current_month" to 1, "current_phase" to 1))
+
+    @Test
+    fun `campaign clear removes all twelve actor slots and preserves owners receipts other actors worlds and frozen profile`() {
+        val campaign = 901
+        val otherWorld = 902
+        val sammo = 903
+        seedQueueWorld(campaign); seedQueueWorld(otherWorld); seedQueueWorld(sammo, campaign = false)
+        val worlds = listOf(campaign, otherWorld, sammo)
+        val before = queueRows(worlds)
+        val preserved = listOf("general_owner", "command_inbox", "command_result", "command_outbox").associateWith {
+            jdbc.queryForList("SELECT * FROM $it WHERE world_id IN (:worlds) ORDER BY 1,2", mapOf("worlds" to worlds))
+        }
+        val payload = queuePayload(campaign).copy(generalTurnClears = listOf(10, 10))
+        executor.flush(payload)
+        assertEquals(before.filterNot { (it["world_id"] as Number).toInt() == campaign &&
+            (it["general_id"] as Number).toInt() == 10 }, queueRows(worlds))
+        assertEquals(FlushExecOp("general_turn_clear", FlushVerb.DELETE_MANY, 12), executor.lastOps().last())
+        executor.flush(queuePayload(sammo).copy(generalTurnClears = listOf(10)))
+        assertTrue(executor.lastOps().none { it.table == "general_turn_clear" })
+        preserved.forEach { (table, rows) -> assertEquals(rows,
+            jdbc.queryForList("SELECT * FROM $table WHERE world_id IN (:worlds) ORDER BY 1,2", mapOf("worlds" to worlds))) }
+        assertEquals(30, queueRows(listOf(sammo)).count { (it["general_id"] as Number).toInt() == 10 })
+    }
+
+    @Test
+    fun `campaign clear takes the actor lock and a lock failure leaves the whole queue intact`() {
+        val id = 904
+        seedQueueWorld(id)
+        val before = queueRows(listOf(id))
+        dataSource.connection.use { blocker ->
+            blocker.autoCommit = false
+            blocker.prepareStatement("SELECT id FROM general WHERE world_id=? AND id=10 FOR UPDATE").use {
+                it.setInt(1, id)
+                it.executeQuery().close()
+            }
+            try {
+                val error = assertFailsWith<org.springframework.dao.DataAccessException> {
+                    TransactionTemplate(DataSourceTransactionManager(dataSource)).execute {
+                        jdbc.jdbcTemplate.execute("SET LOCAL lock_timeout='100ms'")
+                        executor.flush(queuePayload(id).copy(generalTurnClears = listOf(10)))
+                    }
+                }
+                assertTrue(generateSequence<Throwable>(error) { it.cause }.filterIsInstance<java.sql.SQLException>()
+                    .any { it.sqlState == "55P03" }, "the clear must contend on the actor lock")
+                assertEquals(before, queueRows(listOf(id)))
+            } finally { blocker.rollback() }
+        }
     }
 
     private fun rankValue(generalId: Int, type: String): Int =
