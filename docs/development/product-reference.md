@@ -57,13 +57,7 @@ Historical PHP capture (`tools/php-golden/`) is for explicitly requested frozen-
 
 ## Build & test
 
-- **Java 21 LTS required** (Gradle 8.12 fails to parse Java 25). Always run from the **repo root**:
-  ```bash
-  JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test
-  ```
-- **Verify by OUTPUT TAIL + test XML, not exit code alone** (when a host uses a context-mode wrapper, `task-notification` exit 0 can be unreliable). Pipe `... 2>&1 | tail -40`, grep `BUILD SUCCESSFUL` + counts, or read `**/build/test-results/test/*.xml`. Use `--rerun-tasks` (UP-TO-DATE false-greens).
-- **Testcontainers on macOS** needs `api.version=1.44` + `DOCKER_CONTEXT=default` + Ryuk disabled (wired in `tasks.test`). Docker-unavailable ⇒ IT **skipped**, not failed.
-- Full check: `./gradlew :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test :app:board-api:test`. Docker smoke: `./tools/smoke.sh`. Frontend: `cd web/gateway && corepack pnpm dev`.
+The single source is [`.claude/rules/build-test.md`](../../.claude/rules/build-test.md): Java 21 from the repo root, verify by output tail + test XML (not exit code alone), Testcontainers skip ≠ pass, full check, Docker smoke and frontend dev commands.
 
 ## Implementation and review
 
@@ -76,24 +70,9 @@ Use the current task's scope and acceptance criteria. Phase-sized architecture w
 
 ### Living documentation is part of implementation
 
-Documentation is not a tail phase. Every task must assess documentation impact before completion
-and update the affected source of truth in the same issue and PR.
-
-- `README.md` is the public front door. Keep it understandable without private conversation or
-  internal planning context; describe only verified current behavior and clearly labeled direction.
-- `V1` and `V2` are internal code, migration, and regression identifiers, not player-facing product
-  editions. Public titles and user documentation must say existing, current, or new behavior instead.
-- `docs/user/**` owns player rules, tutorials, help, and recovery guidance.
-- `docs/admin/**` owns operations, access controls, reset, backup, restore, and incident procedures.
-- `docs/design/**` and approved specs own product direction, domain language, and release gates.
-- `CLAUDE.md` changes only when a durable product, architecture, or verification invariant changes.
-- `AGENTS.md` changes only when repository structure, workflow, required verification, or document
-  ownership changes.
-- Module and tool `README.md` files change with their inputs, outputs, commands, or ownership.
-
-Do not churn unrelated documents. If no documentation is affected, record `docs-impact: none` with
-the reason in the task report. A task is incomplete when its implementation and documentation
-disagree, or when planned behavior is presented as already shipped.
+Documentation is not a tail phase. The single source for document ownership, `docs-impact: none`
+and the completion rule is the 「살아 있는 문서 규칙 (NON-NEGOTIABLE)」 section of
+[`agent-reference.md`](agent-reference.md#살아-있는-문서-규칙-non-negotiable).
 
 **Golden capture harness — `tools/php-golden/`:** the PROVEN Docker capture (MariaDB 11.4 + `php:8.3-cli`, scenario `1010` = 174 generals, NOT empty scenario_0). Quirks: `_boot.php` binds via `DB::db()`; `j_install.php` is called twice; install is **not** idempotent (fresh DB per run); dumps must be byte-identical across two runs.
 
