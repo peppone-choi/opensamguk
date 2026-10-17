@@ -28,6 +28,7 @@ data class SuccessionRequest(val requestId: String, val option: SuccessionOption
 /** A candidate snapshot, not a mutation of an existing general or of the account. */
 data class SuccessionNpc(
     val generalId: Long,
+    val worldId: Long,
     val nationId: Long?,
     val directLordId: Long?,
     val playerAccountId: Long?,
@@ -37,7 +38,7 @@ data class SuccessionNpc(
     val personalAssetIds: Set<String>,
 ) {
     init {
-        require(generalId > 0)
+        require(generalId > 0 && worldId > 0)
         require(nationId == null || nationId > 0)
         require(directLordId == null || directLordId > 0)
         require(playerAccountId == null || playerAccountId > 0)
@@ -89,7 +90,8 @@ class SuccessionChoice private constructor(
             SuccessionOption.INHERIT -> {
                 val candidate = candidates.singleOrNull { it.generalId == request.targetId }
                     ?: return result(SuccessionStatus.INVALID_TARGET)
-                if (candidate.generalId == case.deceasedGeneralId || candidate.playerAccountId != null ||
+                if (candidate.generalId == case.deceasedGeneralId || candidate.worldId != case.worldId ||
+                    candidate.playerAccountId != null ||
                     candidate.directLordId != case.deceasedGeneralId || candidate.nationId != case.nationId) {
                     return result(SuccessionStatus.INVALID_TARGET)
                 }

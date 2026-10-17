@@ -4,7 +4,7 @@ import kotlin.test.*
 
 class SuccessionChoiceTest {
     private val case = SuccessionCase(1, 2, 3, 4, "permanent-death:3", true)
-    private val npc = SuccessionNpc(5, 4, 3, null, mapOf("leadership" to 37, "intelligence" to 42),
+    private val npc = SuccessionNpc(5, 2, 4, 3, null, mapOf("leadership" to 37, "intelligence" to 42),
         mapOf(9L to -12, 10L to 15), setOf("unit:5", "unit:6"), setOf("estate:5", "estate:6"))
     private val inherit = SuccessionRequest("choice:1", SuccessionOption.INHERIT, 5)
 
@@ -35,7 +35,7 @@ class SuccessionChoiceTest {
 
     @Test
     fun `other players foreign indirect missing duplicate and deceased targets are rejected`() {
-        val candidates = listOf(npc.copy(playerAccountId = 6), npc.copy(nationId = 6),
+        val candidates = listOf(npc.copy(playerAccountId = 6), npc.copy(nationId = 6), npc.copy(worldId = 7),
             npc.copy(directLordId = 6), npc.copy(directLordId = null))
         for (candidate in candidates) {
             assertEquals(SuccessionStatus.INVALID_TARGET, SuccessionChoice(case).choose(1, inherit,
